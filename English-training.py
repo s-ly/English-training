@@ -154,3 +154,11 @@ def start():
 
 
 start()
+
+"""
+import colorama
+from colorama import Fore, Back, Style
+colorama.init()
+print(Fore.RED + 'Красный текст')
+print(Back.BLUE + 'Синий фон', Style.RESET_ALL + '123')
+"""
