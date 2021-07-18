@@ -1,4 +1,4 @@
-""" English_training ver 2.0 aplha.
+""" English_training ver 2.0 aplha 2.
 Программа для разучивания английских слов. Выводит список слов для перевода.
 """
 
@@ -43,10 +43,7 @@ def menu_select() -> str:
     
     # ввод и проверка, иначе поновой
     menu_sel = input("Ваш выбор: ")
-    if menu_sel == "0"
-    or menu_sel == "1"
-    or menu_sel == "2"
-    or menu_sel == "3":
+    if menu_sel == "0" or menu_sel == "1" or menu_sel == "2" or menu_sel == "3":
         print()
         return (menu_sel)
     else:
@@ -71,7 +68,7 @@ def print_dict():
         
         # формируем и выводим строку со всеми колонками
         print(i[0] + (" " * dobavka_col_0) +
-              i[1] + (" " * dobavka_col_1) +
+              "[" + i[1] + "]" + (" " * dobavka_col_1) +
               i[2] + (" " * dobavka_col_2) +              
               i[3])        
         
@@ -88,12 +85,13 @@ def translate_RusToEng():
     for i in copy_dict_words:            
         answer_user = input("".join(i[2])+" - ")
         if answer_user == i[0]:
-            print("Правильно", i[1], i[3], "\n")        
+            print("Правильно.", i[1], i[3], "\n")        
         elif answer_user == "0":
             break_fun() # прерывание упражнения при вводе "0"
             break
         else:
-            print("Ошибка.", "Правильный ответ:", i[0], i[1], i[3],"\n")
+            print(Fore.RED + "Ошибка." + Style.RESET_ALL, 
+            "Правильный ответ:", i[0], i[1], i[3],"\n")
             # увеличиваем съётчик ошибок
             global errors
             errors += 1
@@ -113,7 +111,8 @@ def translate_EngToRus():
             break_fun() # прерывание упражнения при вводе "0"
             break
         else:
-            print("Ошибка.", "Правильный ответ:", i[2], i[1], i[3],"\n")            
+            print(Fore.RED + "Ошибка." + Style.RESET_ALL, 
+            "Правильный ответ:", i[2], i[1], i[3],"\n")            
             global errors
             errors += 1 # увеличиваем съётчик ошибок
 
@@ -163,11 +162,3 @@ def start():
 
 
 start()
-
-"""
-import colorama
-from colorama import Fore, Back, Style
-colorama.init()
-print(Fore.RED + 'Красный текст')
-print(Back.BLUE + 'Синий фон', Style.RESET_ALL + '123')
-"""
