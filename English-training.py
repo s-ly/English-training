@@ -4,6 +4,10 @@
 
 import random   # для раднома
 import csv      # для чтения таблици
+import colorama # для цвета шрифта 
+from colorama import Fore, Back, Style
+
+colorama.init()
 
 menu_sel = ""   # обнулённая глобальная переменная - выбор из меню
 errors = 0      # обнулённый счётчик ошибок пользователя
@@ -25,7 +29,7 @@ copy_dict_words = dict_words.copy()
 
 
 
-def menu_select():
+def menu_select() -> str:
     """ Выводит меню и принемает с клавиатуры выбор пользователья.
     Если от 0 до 3 то возврат, иначе по новой. Работает с глобальной переменной.
     """
@@ -35,16 +39,19 @@ def menu_select():
     print("2 - С английского на русский")
     print("3 - Распечатать список") 
     
-    global menu_sel # берём глобальную пеперенную
-
+    global menu_sel
+    
     # ввод и проверка, иначе поновой
     menu_sel = input("Ваш выбор: ")
-    if menu_sel == "0" or menu_sel == "1" or menu_sel == "2" or menu_sel == "3":
+    if menu_sel == "0"
+    or menu_sel == "1"
+    or menu_sel == "2"
+    or menu_sel == "3":
         print()
         return (menu_sel)
     else:
         print()
-        menu_select()
+        menu_select() # выбираем снова
 
 
 
@@ -74,7 +81,8 @@ def print_dict():
 
 
 def translate_RusToEng():
-    """ Принимает скопированный ранее списко. Пользователь вводит перевод с РУС на ENG.
+    """ Принимает скопированный ранее списко.
+    Пользователь вводит перевод с РУС на ENG.
     Проверяет каждый ввод.
     """
     for i in copy_dict_words:            
@@ -93,13 +101,11 @@ def translate_RusToEng():
 
 
 def translate_EngToRus():
-    """ Принимает скопированный ранее списко. Пользователь вводит перевод с ENG на РУС.
+    """ Принимает скопированный ранее списко.
+    Пользователь вводит перевод с ENG на РУС.
     Проверяет каждый ввод.
     """
     for i in copy_dict_words:
-        # # ели есть примечание, выводим его (то есть ячейка не пустая)
-        # if len(i[3]) != 0:
-        #     print(i[3])            
         answer_user = input("".join(i[0])+" - ")
         if answer_user == i[2]:
             print("Правильно", i[1], i[3], "\n")        
@@ -124,9 +130,10 @@ def break_fun():
 def start():
     """Запускающая функция"""
     print("\nEnglish training ver 2.0 alpha \n")    
-    global menu_sel                 # берём глобальную переменную    
-    random.shuffle(copy_dict_words) # перемешивает скопированную последовательность    
-    global errors                   # доступ к голобальной переменной хранящей ошибки
+    global menu_sel
+    # перемешивает скопированную последовательность    
+    random.shuffle(copy_dict_words) 
+    global errors # хранитт ошибки
     
     # если ничего не выбранно
     if menu_sel == "":
@@ -134,19 +141,21 @@ def start():
         start()
     elif menu_sel == "1":
         translate_RusToEng()        
-        print ('Ошибок:', errors, 'из', len(dict_words), '\n') # печать околичества ошибок        
-        errors = 0                                             # обнуление        
-        menu_sel=""                                            # обнуляем выбор
+        # печать околичества ошибок        
+        print ('Ошибок:', errors, 'из', len(dict_words), '\n') 
+        errors = 0 # обнуление        
+        menu_sel="" # обнуляем выбор
         start()        
     elif menu_sel == "2":
-        translate_EngToRus()        
-        print ('Ошибок:', errors, 'из', len(dict_words), '\n') # печать околичества ошибок        
-        errors = 0                                             # обнуление        
-        menu_sel=""                                            # обнуляем выбор
+        translate_EngToRus()
+        # печать околичества ошибок        
+        print ('Ошибок:', errors, 'из', len(dict_words), '\n') 
+        errors = 0 # обнуление        
+        menu_sel="" # обнуляем выбор
         start()        
     elif menu_sel == "3":
         print_dict()        
-        menu_sel=""                                            # обнуляем выбор
+        menu_sel="" # обнуляем выбор
         start()        
     else:
         print("До свидания!", "\n")
