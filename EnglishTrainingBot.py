@@ -13,7 +13,7 @@ API_TOKEN = MyToken.myToken
 # Initialize bot and dispatcher
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
-xxx = ''
+
 
 
 @dp.message_handler(commands=['start', 'help'])
@@ -25,8 +25,37 @@ async def send_welcome(message: types.Message):
 
 @dp.message_handler(commands=['test'])
 async def send_test(message: types.Message):
-    """ Отвечает на команды /test """
-    await message.answer(EnglishTraining.print_dict_bot())
+    """ Отвечает на команды /test.
+    Берёт из модуля EnglishTraining список слов dict_words. 
+    Формирует строки и конкатинирует их с символом новой строки.
+    Когда количетво как бы строк subStrokeSum в общей строке достигает максимума,
+    выводит в телеграм, затем поновой бежит по списку слов. """
+    
+    sum_strok = 0      # ограничитель печатаемых ботом строк
+    dict_word_bot = '' # формируемая для отправки боту строка
+    subStrokeSum = 50  # кол-во подстрок в строке
+    len_col = 15       # ширина колонок
+    
+    for i in EnglishTraining.dict_words:
+        # сётчик строк
+        sum_strok = sum_strok + 1
+
+        # вычисляем недостающее кол-во пробелов для ширины колонок
+        dobavka_col_0 = len_col - len(i[0])
+        dobavka_col_1 = len_col - len(i[1]) 
+        dobavka_col_2 = len_col - len(i[2])
+
+        # формируем и добавляем строку со всеми колонками
+        dict_word_bot = dict_word_bot + (i[0] + (" " * dobavka_col_0) +
+        "[" + i[1] + "]" + (" " * dobavka_col_1) +
+        i[2] + (" " * dobavka_col_2) + i[3] + "\n")
+        
+        # ограничение кол-ва строк, передаваемых ботом за раз
+        if (sum_strok == subStrokeSum):
+            await message.answer(dict_word_bot)    
+            sum_strok = 0      # обнуляем
+            dict_word_bot = '' # обнуляем 
+            continue           # обрыв цикла и поновой
 
 
 

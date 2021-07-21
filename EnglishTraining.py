@@ -78,42 +78,11 @@ def print_dict():
 
 
 
-def print_dict_bot():
-    """Распечатывает исходный словарь. Используется для bot."""
-    # берём глобальную пеперенную ширины колонок
-    global len_col_0
-    global len_col_1
-    global len_col_2
-
-    sum_strok = 0 # ограничитель передаваемых боту строк
-    dict_word_bot = '' # формируемая для отправки боту строка
-    
-    for i in dict_words:        
-        sum_strok = sum_strok + 1
-        # вычисляем недостающее кол-во пробелов для ширины колонок
-        # для 1 и 2 колонки
-        dobavka_col_0 = len_col_0 - len(i[0])
-        dobavka_col_1 = len_col_1 - len(i[1])
-        dobavka_col_2 = len_col_2 - len(i[2])
-        
-        # формируем и выводим строку со всеми колонками
-        dict_word_bot = dict_word_bot + (i[0] + (" " * dobavka_col_0) +
-              "[" + i[1] + "]" + (" " * dobavka_col_1) +
-              i[2] + (" " * dobavka_col_2) +              
-              i[3] + "\n")
-
-        # ограничение кол-ва строк, передаваемых ботом
-        if (sum_strok == 75): break          
-        
-    return(dict_word_bot)    
-    
-
-
 def translate_RusToEng():
     """ Принимает скопированный ранее списко.
     Пользователь вводит перевод с РУС на ENG.
-    Проверяет каждый ввод.
-    """
+    Проверяет каждый ввод. """
+
     for i in copy_dict_words:            
         answer_user = input("".join(i[2])+" - ")
         if answer_user == i[0]:
@@ -133,8 +102,8 @@ def translate_RusToEng():
 def translate_EngToRus():
     """ Принимает скопированный ранее списко.
     Пользователь вводит перевод с ENG на РУС.
-    Проверяет каждый ввод.
-    """
+    Проверяет каждый ввод. """
+    
     for i in copy_dict_words:
         answer_user = input("".join(i[0])+" - ")
         if answer_user == i[2]:
