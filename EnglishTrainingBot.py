@@ -3,6 +3,7 @@
 
 from aiogram import Bot, Dispatcher, executor, types
 import MyToken # содержит токен
+import EnglishTraining
 
 # Импрорт токена из файла MyToken.py (лежит в раб каталоге)
 # Файл MyToken.py содержит одну строку: myToken = 'тут токен'
@@ -12,7 +13,7 @@ API_TOKEN = MyToken.myToken
 # Initialize bot and dispatcher
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
-
+xxx = ''
 
 
 @dp.message_handler(commands=['start', 'help'])
@@ -25,7 +26,7 @@ async def send_welcome(message: types.Message):
 @dp.message_handler(commands=['test'])
 async def send_test(message: types.Message):
     """ Отвечает на команды /test """
-    await message.reply("test ok")
+    await message.answer(EnglishTraining.print_dict_bot())
 
 
 
