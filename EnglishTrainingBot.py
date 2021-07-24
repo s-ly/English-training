@@ -2,13 +2,20 @@
 # Тренирует английские слова.
 
 from aiogram import Bot, Dispatcher, executor, types
+
+# дополнительно для форматирования
+from aiogram.utils.markdown import text, bold, italic, code, underline, strikethrough
 import MyToken # содержит токен
 import EnglishTraining
 
 # Импрорт токена из файла MyToken.py (лежит в раб каталоге)
-# Файл MyToken.py содержит одну строку: myToken = 'тут токен'
+# Файл MyToken.py содержит две строки:
+# myToken = 'тут токен'
+# testToken = 'тут токен'
+# При разработке использеум test, для работы my.
 # в git его игнорируем, а в место пушим зашифрованный архив.
-API_TOKEN = MyToken.myToken
+# API_TOKEN = MyToken.myToken # рабочий бот
+API_TOKEN = MyToken.testToken # тестовый бот
 
 # Initialize bot and dispatcher
 bot = Bot(token=API_TOKEN)
@@ -52,7 +59,7 @@ async def send_test(message: types.Message):
         
         # ограничение кол-ва строк, передаваемых ботом за раз
         if (sum_strok == subStrokeSum):
-            await message.answer(dict_word_bot)    
+            await message.answer(code(dict_word_bot), parse_mode=types.ParseMode.MARKDOWN_V2)    
             sum_strok = 0      # обнуляем
             dict_word_bot = '' # обнуляем 
             continue           # обрыв цикла и поновой
