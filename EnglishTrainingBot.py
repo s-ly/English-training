@@ -35,13 +35,28 @@ async def send_welcome(message: types.Message):
 
 
 @dp.message_handler(commands=['test'])
-async def send_welcome(message: types.Message):
+async def send_welcome2(message: types.Message):
     """ Отвечает на команды /test """
-    await message.answer("test")
+    languageSelection = random.randint(0, 1) # случайный выбор языка
+    
+    # приставка, подставляемая к слову id, что бы понимать направление перевода.
+    languageSelectionPrefix = ""
+
     dictLen = len(EnglishTraining.dict_words)        # кол-во слов в словаре
     dictRandomID = (random.randrange(dictLen)) + 1   # случайное слово
-    await message.answer("id:" + str(dictRandomID))
-    await message.answer(str(EnglishTraining.dict_words[dictRandomID]))
+    # await message.answer("id:" + str(dictRandomID))
+    # await message.answer(str(EnglishTraining.dict_words[dictRandomID]))
+
+    # фрмирование строки вопроса изходя из случайно выбранного направления перевода
+    if languageSelection == 0:
+        questionWord = (EnglishTraining.dict_words[dictRandomID])[0]
+        languageSelectionPrefix = "Eng"
+    if languageSelection == 1:
+        questionWord = (EnglishTraining.dict_words[dictRandomID])[2]
+        languageSelectionPrefix = "Rus"
+    await message.answer(languageSelectionPrefix + "Id:" +  str(dictRandomID) + " " + questionWord)
+        # await message.answer("Id:" + str(dictRandomID) + " " +
+        # str(EnglishTraining.dict_words[dictRandomID]))
     
 
 
@@ -85,7 +100,7 @@ async def send_test(message: types.Message):
 @dp.message_handler(commands=['help'])
 async def send_test(message: types.Message):
     """ Отвечает на команды /help. """
-    await message.answer("English Training\nVersion 0.1 2021.07.25\n" + 
+    await message.answer("English Training\nVersion 2021.07.27\n" + 
     "Тренируй английские слова!\n\nСписок команд (вводи с палочкой):\n" + 
     "/start - запуск, приветствие\n" + 
     "/help - справка\n" + 
@@ -97,15 +112,66 @@ async def send_test(message: types.Message):
 
 @dp.message_handler()
 async def send_welcome(message: types.Message):
-    """ Отвечает на любые сообщения повторением. """
+    """ Отвечает на любые сообщения повторением. 
+    Отслеживает, нет ли в сообщении ответа (кнопка ответить)"""
+
+    responseSign = "" # признак ответа
+
     # await message.reply(message.text)
     if (message.reply_to_message != None):
-        await message.answer("Зафиксирован ответ на сообщение: "
-        + message.reply_to_message.text)
+        await message.answer("Зафиксирован ответ на сообщение: " + message.reply_to_message.text)
         
         print("\nЗафиксирован ответ")
         print(message.reply_to_message.date)
         print(message)
+
+        # поиск признаков направления перевода
+        if (message.reply_to_message.text).find("EngId:") == 0:     
+            print("Направление перевода с Eng на Rus")
+            endId = (message.reply_to_message.text).find(" ") # поиск пробела после "id:"
+
+            questionBotWordId = int((message.reply_to_message.text)[6:endId]) # срез id 
+            questionBotWord = (message.reply_to_message.text)[(endId + 1):] # срез загадываемого слова
+            answerUser = message.text # ответ пользователя
+            
+            print(str(questionBotWordId)) # печать id загадываемого слова
+            print(questionBotWord) # печать загадываемого слова
+            print(answerUser)
+
+            # проверка ответа пользователья
+            if (answerUser == (EnglishTraining.dict_words[questionBotWordId])[2]):
+                print("Правильно")
+                await message.answer("Правильно") 
+            else:
+                print("Ошибка")
+                await message.answer("Ошибка, правильный ответ: " + 
+                (EnglishTraining.dict_words[questionBotWordId])[2]) 
+
+            await send_welcome2(message) # поновой, как буддто пользователь ввёл "/test"
+
+        if (message.reply_to_message.text).find("RusId:") == 0:   
+            print("Направление перевода с Rus на Eng") 
+            endId = (message.reply_to_message.text).find(" ") # поиск пробела после "id:"
+
+            questionBotWordId = int((message.reply_to_message.text)[6:endId]) # срез id 
+            questionBotWord = (message.reply_to_message.text)[(endId + 1):] # срез загадываемого слова
+            answerUser = message.text # ответ пользователя
+            
+            print(str(questionBotWordId)) # печать id загадываемого слова
+            print(questionBotWord) # печать загадываемого слова
+            print(answerUser)
+
+            # проверка ответа пользователья
+            if (answerUser == (EnglishTraining.dict_words[questionBotWordId])[0]):
+                print("Правильно")
+                await message.answer("Правильно") 
+            else:
+                print("Ошибка")
+                await message.answer("Ошибка, правильный ответ: " + 
+                (EnglishTraining.dict_words[questionBotWordId])[0])  
+
+            await send_welcome2(message) # поновой, как буддто пользователь ввёл "/test"
+        
         
         # print(message.reply_to_message)
         # print(message.reply_to_message.text)
