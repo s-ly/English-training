@@ -1,4 +1,4 @@
-# Телеграм бот t.me/EngTraining_Bot ver 0.1
+# Телеграм бот t.me/EngTraining_Bot
 # Тренирует английские слова.
 
 from aiogram import Bot, Dispatcher, executor, types
@@ -9,15 +9,15 @@ import MyToken         # содержит токен
 import EnglishTraining # мой модуль, читает словарь из файла
 import random          # для раднома
 
-""" Импрорт токена из файла MyToken.py (лежит в раб каталоге)
-Файл MyToken.py содержит две строки:
-myToken = 'тут токен'
-testToken = 'тут токен'
-При разработке использеум test, для работы my.
-в git его игнорируем, а в место пушим зашифрованный архив."""
+# Импрорт токена из файла MyToken.py (лежит в раб каталоге)
+# Файл MyToken.py содержит две строки:
+# myToken = 'тут токен'
+# testToken = 'тут токен'
+# При разработке использеум test, для работы my.
+# в git его игнорируем, а в место пушим зашифрованный архив.
 
-# API_TOKEN = MyToken.myToken # рабочий бот
-API_TOKEN = MyToken.testToken # тестовый бот
+API_TOKEN = MyToken.myToken # рабочий бот
+# API_TOKEN = MyToken.testToken # тестовый бот
 
 # Initialize bot and dispatcher
 bot = Bot(token=API_TOKEN)
@@ -95,7 +95,7 @@ async def send_test(message: types.Message):
 @dp.message_handler(commands=['help'])
 async def send_test(message: types.Message):
     """ Отвечает на команды /help. """
-    await message.answer("English Training\nVersion 2021.08.01\n" + 
+    await message.answer("English Training\nVersion 2021.08.04\n" + 
     "Тренируй английские слова!\n\nСписок команд (вводи с палочкой):\n" + 
     "/start - запуск бота, приветствие\n" + 
     "/help - справка\n" + 
@@ -115,8 +115,10 @@ async def send_welcome(message: types.Message):
     Иначе предлагаем пользователю посмотреть справку."""
 
     if (message.reply_to_message != None):        
-        print("\nЗафиксирован ответ на сообщение: " + message.reply_to_message.text)
-        print(message.reply_to_message.date)
+        print("\nЗафиксирован ответ на сообщение.")
+        print("дата ответа: " + str(message.reply_to_message.date))
+        print("текст ответа: " + str(message.reply_to_message.text))
+        print("User: " + (message.reply_to_message.chat.username))
         await CheckingResponse(message) # разбираем ответ пользователя.
     else:
         await message.answer("Хм, непонятно... \nДля справки введи /help (с палочкой).")    
@@ -125,59 +127,52 @@ async def send_welcome(message: types.Message):
 
 async def CheckingResponse(message):
     """Вызывается при наличии ответа пользователя. Разбирает и проверяет ответ. 
+    Обнаруживает в ответе кусок "EngId:" или "RusId:", и так определяет направление перевода,
+    иначе прирывает метод. Сообщение распарсивается на части, срезами выделяется id слова,
+    загаданное слово и сам ответ пользователя. Потом проверяется ответ пользователя
+    на правильность. В результате проверки формируется ответ бота на ответ пользователя.
     В конце снова вызывает метод send_welcome2(message), дающий пользователю
     новое слово-задание."""
-        
+
+    translatDir = None # направление перевода
+    
     # поиск признаков направления перевода
-    if (message.reply_to_message.text).find("EngId:") == 0:     
+    if (message.reply_to_message.text).find("EngId:") == 0:
+        translatDir = 2
         print("Направление перевода с Eng на Rus")
-        endId = (message.reply_to_message.text).find(" ") # поиск пробела после "id:"
+    elif (message.reply_to_message.text).find("RusId:") == 0:
+        translatDir = 0
+        print("Направление перевода с Rus на Eng")
+    else:
+        await message.answer("Хм, непонятный ответ... \nДля справки введи /help (с палочкой).")
+        print("Хм, непонятный ответ...")
+        return None
 
-        questionBotWordId = int((message.reply_to_message.text)[6:endId]) # срез id 
-        questionBotWord = (message.reply_to_message.text)[(endId + 1):] # срез загадываемого слова
-        answerUser = message.text # ответ пользователя
-        answerUser = answerUser.lower() # всё с маленькой буквы
-        
-        print(str(questionBotWordId)) # печать id загадываемого слова
-        print(questionBotWord)        # печать загадываемого слова
-        print(answerUser)
+    endId = (message.reply_to_message.text).find(" ")                 # поиск пробела после "id:"
+    questionBotWordId = int((message.reply_to_message.text)[6:endId]) # срез id 
+    questionBotWord = (message.reply_to_message.text)[(endId + 1):]   # срез загадываемого слова
+    answerUser = message.text       # ответ пользователя
+    answerUser = answerUser.lower() # всё с маленькой буквы
 
-        # проверка ответа пользователья
-        if (answerUser == (EnglishTraining.dict_words[questionBotWordId])[2]):
-            print("Правильно")
-            await message.answer("Правильно") 
-        else:
-            print("Ошибка")
-            await message.answer("Ошибка, правильный ответ: " + 
-            (EnglishTraining.dict_words[questionBotWordId])[2]) 
+    print("id загадываемого слова: " + str(questionBotWordId)) # печать id загадываемого слова
+    print("Загадываемое слово: "+ questionBotWord)             # печать загадываемого слова    
 
-        await send_welcome2(message) # поновой, как буддто пользователь ввёл "/go"
+    # формируем строку правильного ответа
+    correctAnswer = ( 
+    str((EnglishTraining.dict_words[questionBotWordId])[0]) + 
+    " [" + str((EnglishTraining.dict_words[questionBotWordId])[1]) + "] " +
+    str((EnglishTraining.dict_words[questionBotWordId])[2]))
 
-    # поиск признаков направления перевода
-    if (message.reply_to_message.text).find("RusId:") == 0:   
-        print("Направление перевода с Rus на Eng") 
-        endId = (message.reply_to_message.text).find(" ") # поиск пробела после "id:"
+    # проверка ответа пользователья
+    if (answerUser == (EnglishTraining.dict_words[questionBotWordId])[translatDir]):
+        print("Правильно")
+        await message.answer("Правильно\n" + correctAnswer) 
+    else:
+        print("Ошибка")
+        await message.answer("Ошибка\n" + correctAnswer)  
 
-        questionBotWordId = int((message.reply_to_message.text)[6:endId]) # срез id 
-        questionBotWord = (message.reply_to_message.text)[(endId + 1):] # срез загадываемого слова
-        answerUser = message.text # ответ пользователя
-        answerUser = answerUser.lower() # всё с маленькой буквы
-        
-        print(str(questionBotWordId)) # печать id загадываемого слова
-        print(questionBotWord)        # печать загадываемого слова
-        print(answerUser)
-
-        # проверка ответа пользователья
-        if (answerUser == (EnglishTraining.dict_words[questionBotWordId])[0]):
-            print("Правильно")
-            await message.answer("Правильно") 
-        else:
-            print("Ошибка")
-            await message.answer("Ошибка, правильный ответ: " + 
-            (EnglishTraining.dict_words[questionBotWordId])[0])  
-
-        await send_welcome2(message) # поновой, как буддто пользователь ввёл "/go"    
-
+    await send_welcome2(message) # поновой, как буддто пользователь ввёл "/go"
+    
 
 
 if __name__ == '__main__':
