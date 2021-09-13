@@ -16,8 +16,8 @@ import random          # для раднома
 # При разработке использеум test, для работы my.
 # в git его игнорируем, а в место пушим зашифрованный архив.
 
-API_TOKEN = MyToken.myToken # рабочий бот
-# API_TOKEN = MyToken.testToken # тестовый бот
+# API_TOKEN = MyToken.myToken # рабочий бот
+API_TOKEN = MyToken.testToken # тестовый бот
 
 # Initialize bot and dispatcher
 bot = Bot(token=API_TOKEN)
@@ -37,22 +37,47 @@ async def send_welcome(message: types.Message):
 @dp.message_handler(commands=['go'])
 async def send_welcome2(message: types.Message):
     """ Отвечает на команды /go. Создаёт строку вопроса. """
+    dictRandomID = None # без этого появлялась ошибка выхода из диапазона (иногда)
+    questionWord = None # обнуление старого вопроса (на всякий)
+    randomDictStroke = None
     languageSelection = random.randint(0, 1) # случайный выбор языка
+    # print('-languageSelection-- ' + str(languageSelection))
     
     # приставка, подставляемая к слову id, что бы понимать направление перевода.
     languageSelectionPrefix = ""
 
     dictLen = len(EnglishTraining.dict_words)        # кол-во слов в словаре
-    dictRandomID = (random.randrange(dictLen)) + 1   # случайное слово
+    # print('-dictLen-- ' + str(dictLen))
+    dictRandomID = random.randint(0, dictLen - 1)    # случайное слово
+    # print('-dictRandomID-- ' + str(dictRandomID))    
+    randomDictStroke = EnglishTraining.dict_words[dictRandomID] # случайная строка
 
     # фрмирование строки вопроса изходя из случайно выбранного направления перевода
+    # если с русского то учитывается кол-во синонимов
     if languageSelection == 0:
-        questionWord = (EnglishTraining.dict_words[dictRandomID])[0]
         languageSelectionPrefix = "Eng"
-    if languageSelection == 1:
-        questionWord = (EnglishTraining.dict_words[dictRandomID])[2]
+        questionWord = str(randomDictStroke[0])
+    elif languageSelection == 1:
         languageSelectionPrefix = "Rus"
-    await message.answer(languageSelectionPrefix + "Id:" +  str(dictRandomID) + " " + questionWord)
+        len_i = 0 # получаемое кол-во синонимов (обнуление)    
+        # Подсчёт кол-ва синонимов в строке словаря (мой метод) 
+        len_i = await SumSynonym(randomDictStroke) 
+        # print('-----------' + str(len_i))
+        if len_i == 1:
+            questionWord = str(randomDictStroke[2])
+        elif len_i == 2:
+            questionWord = str(randomDictStroke[2]) + ', ' + str(randomDictStroke[3])
+        elif len_i == 3:
+            questionWord = (str(randomDictStroke[2]) + ', ' + str(randomDictStroke[3]) 
+            + ', ' + str(randomDictStroke[4]))
+        elif len_i == 4:
+            questionWord = (str(randomDictStroke[2]) + ', ' + str(randomDictStroke[3]) 
+            + ', ' + str(randomDictStroke[4]) + ', ' + str(randomDictStroke[5]))
+        elif len_i == 5:
+            questionWord = (str(randomDictStroke[2]) + ', ' + str(randomDictStroke[3]) 
+            + ', ' + str(randomDictStroke[4]) + ', ' + str(randomDictStroke[5])
+            + ', ' + str(randomDictStroke[6]))
+    await message.answer(languageSelectionPrefix + "Id:" +  str(dictRandomID) + " " + str(questionWord))
     
 
 
@@ -65,23 +90,42 @@ async def send_test(message: types.Message):
     Когда количетво как бы строк subStrokeSum в общей строке достигает максимума,
     выводит в телеграм, затем поновой бежит по списку слов. """
     
+    sum_all_strok = 0  # общее кол-во слов
     sum_strok = 0      # ограничитель печатаемых ботом строк
     dict_word_bot = '' # формируемая для отправки боту строка
+    sum_all_words = '' # строка для печати кол-ва всех слов в словаре
     subStrokeSum = 50  # кол-во подстрок в строке
+    # subStrokeSum = 6  # кол-во подстрок в строке
     len_col = 15       # ширина колонок
     
     for i in EnglishTraining.dict_words:        
-        sum_strok = sum_strok + 1 # сётчик строк
+        sum_strok = sum_strok + 1         # сётчик строк
+        sum_all_strok = sum_all_strok + 1 # счётчик всех слов в словаре
 
         # вычисляем недостающее кол-во пробелов для ширины колонок
         dobavka_col_0 = len_col - len(i[0])
-        dobavka_col_1 = len_col - len(i[1]) 
-        dobavka_col_2 = len_col - len(i[2])
 
-        # формируем и добавляем строку со всеми колонками
-        dict_word_bot = dict_word_bot + (i[0] + (" " * dobavka_col_0) +
-        "[" + i[1] + "]" + (" " * dobavka_col_1) +
-        i[2] + (" " * dobavka_col_2) + i[3] + "\n")
+        len_i = 0 # получаемое колво синонимов
+        len_i = await SumSynonym(i) # Подсчёт кол-ва синонимов в строке словаря (мой метод)
+
+        # формируем и добавляем строку со всеми колонками (без транскрипции)
+        # в зависимости от кол-ва синонимов.
+        if len_i == 1:      
+            dict_word_bot = dict_word_bot + (i[0] + (" " * dobavka_col_0) +
+            i[2] + "\n")
+        if len_i == 2:   
+            dict_word_bot = dict_word_bot + (i[0] + (" " * dobavka_col_0) +
+            i[2] + ', ' + i[3] + "\n")
+        if len_i == 3:    
+            dict_word_bot = dict_word_bot + (i[0] + (" " * dobavka_col_0) +
+            i[2] + ', ' + i[3] + ', ' + i[4] + "\n")
+        if len_i == 4:     
+            dict_word_bot = dict_word_bot + (i[0] + (" " * dobavka_col_0) +
+            i[2] + ', ' + i[3] + ', ' + i[4] + ', ' + i[5] + "\n")
+        if len_i == 5:      
+            dict_word_bot = dict_word_bot + (i[0] + (" " * dobavka_col_0) +
+            i[2] + ', ' + i[3] + ', ' + i[4] + ', ' + i[5] + ', ' + i[6] + "\n")
+        
         
         # ограничение кол-ва строк, передаваемых ботом за раз
         if (sum_strok == subStrokeSum):
@@ -90,13 +134,17 @@ async def send_test(message: types.Message):
             dict_word_bot = '' # обнуляем 
             continue           # обрыв цикла и поновой
 
+    # формирование строки с общим кол-вом слов в словаре
+    sum_all_words = sum_all_words + 'Всего слов в словаре: ' + str(sum_all_strok)
+    await message.answer(code(sum_all_words), parse_mode=types.ParseMode.MARKDOWN_V2) 
+    sum_all_strok = 0 # обнуляем счётчик всех слов
+
 
 
 @dp.message_handler(commands=['help'])
 async def send_test(message: types.Message):
     """ Отвечает на команды /help. """
-    await message.answer("English Training\nVersion 2021.08.04\n" + 
-    "Тренируй английские слова!\n\nСписок команд (вводи с палочкой):\n" + 
+    await message.answer("Тренируй английские слова!\n\nСписок команд (вводи с палочкой):\n" + 
     "/start - запуск бота, приветствие\n" + 
     "/help - справка\n" + 
     "/dict - показать словарь\n" +
@@ -104,7 +152,19 @@ async def send_test(message: types.Message):
     "После запуска тренировки бот выдаёт слово для перевода, чтобы ответить, " +
     "нажми на слово и выбери 'ОТВЕТИТЬ', потом пиши ответ и отправляй. " +
     "Для удобства просмотра словаря, поверни телефон горизонтально. " +
-    "Если бот не даёт слово, снова введи /go.")    
+    "Если бот не даёт слово, снова введи /go.\n\n"
+    "Подробная инструкция:\n" + 
+    "Для начала тренировки введите /go (с палочной). Бот напишет сообщение для перевода." +
+    " Случайным образом будет предложено перевести или с русского на английский или наоборот." +
+    " Например, бот напишет 'EngId:176 mind'. Начало строки 'EngId:176' не имеет значения," +
+    " это техническая часть, далее после пробела следует слово для перевода 'mind'." +
+    " У этого слова в русском переводе есть несколько вариантов: 'разум', 'ум', 'мнение'." +
+    " Вам необходимо написать только одно любое подходящее слово на русском." +
+    " Для этого не получится просто написать ответ. Необходимо воспользоваться" +
+    " функцией Телеграм 'Ответить'. Ткните в сообщение бота, появится контекстное" +
+    " выпадающее меню, в нём выберете 'Ответить' и теперь вводите свой ответ.\n\n" +
+    "English Training Bot version 2021.09.14\n" + 
+    "Разработка @SergeyLysov")    
 
 
 
@@ -157,21 +217,112 @@ async def CheckingResponse(message):
     print("id загадываемого слова: " + str(questionBotWordId)) # печать id загадываемого слова
     print("Загадываемое слово: "+ questionBotWord)             # печать загадываемого слова    
 
-    # формируем строку правильного ответа
-    correctAnswer = ( 
-    str((EnglishTraining.dict_words[questionBotWordId])[0]) + 
-    " [" + str((EnglishTraining.dict_words[questionBotWordId])[1]) + "] " +
-    str((EnglishTraining.dict_words[questionBotWordId])[2]))
+    currentDictStroke = EnglishTraining.dict_words[questionBotWordId] # текущая строка словаря (по id)
+    len_i = 0 # получаемое кол-во синонимов (обнуление)
+    
+    # Подсчёт кол-ва синонимов в строке словаря (мой метод) 
+    len_i = await SumSynonym(currentDictStroke) 
+    
+    # формируем строку правильного ответа в зависимости от кол-ва синонимов (len_i)
+    correctAnswer = '' # ответ бота
+    if len_i == 1:
+        correctAnswer = (str(currentDictStroke[0]) + " [" + str(currentDictStroke[1]) + "] " +
+        str(currentDictStroke[2]))
 
-    # проверка ответа пользователья
-    if (answerUser == (EnglishTraining.dict_words[questionBotWordId])[translatDir]):
-        print("Правильно")
-        await message.answer("Правильно\n" + correctAnswer) 
-    else:
-        print("Ошибка")
-        await message.answer("Ошибка\n" + correctAnswer)  
+    elif len_i == 2:
+        correctAnswer = (str(currentDictStroke[0]) + " [" + str(currentDictStroke[1]) + "] " +
+        str(currentDictStroke[2]) + ', ' + str(currentDictStroke[3]))
+
+    elif len_i == 3:
+        correctAnswer = (str(currentDictStroke[0]) + " [" + str(currentDictStroke[1]) + "] " +
+        str(currentDictStroke[2]) + ', ' + str(currentDictStroke[3]) + ', ' + 
+        str(currentDictStroke[4]))
+
+    elif len_i == 4:
+        correctAnswer = (str(currentDictStroke[0]) + " [" + str(currentDictStroke[1]) + "] " +
+        str(currentDictStroke[2]) + ', ' + str(currentDictStroke[3]) + ', ' + 
+        str(currentDictStroke[4]) + ', ' + str(currentDictStroke[5]))
+
+    elif len_i == 5:
+        correctAnswer = (str(currentDictStroke[0]) + " [" + str(currentDictStroke[1]) + "] " +
+        str(currentDictStroke[2]) + ', ' + str(currentDictStroke[3]) + ', ' + 
+        str(currentDictStroke[4]) + ', ' + str(currentDictStroke[5]) + ', ' +
+        str(currentDictStroke[6]))
+
+    # проверка ответа пользователья если с RUS на ENG
+    if translatDir == 0:
+        if (answerUser == (currentDictStroke[0])):
+            print("Правильно")
+            await message.answer("Правильно\n" + correctAnswer) 
+        else:
+            print("Ошибка")
+            await message.answer("Ошибка\n" + correctAnswer) 
+
+    # проверка ответа пользователья если с ENG на RUS в зависимости от кол-ва синонимов
+    if translatDir == 2:
+        if len_i == 1:
+            if (answerUser == (currentDictStroke[2])):
+                print("Правильно")
+                await message.answer("Правильно\n" + correctAnswer) 
+            else:
+                print("Ошибка")
+                await message.answer("Ошибка\n" + correctAnswer) 
+
+        elif len_i == 2:
+            if (answerUser == (currentDictStroke[2]) or answerUser == (currentDictStroke[3])):
+                print("Правильно")
+                await message.answer("Правильно\n" + correctAnswer) 
+            else:
+                print("Ошибка")
+                await message.answer("Ошибка\n" + correctAnswer) 
+
+        elif len_i == 3:
+            if (answerUser == (currentDictStroke[2]) or answerUser == (currentDictStroke[3]) 
+            or answerUser == (currentDictStroke[4])):
+                print("Правильно")
+                await message.answer("Правильно\n" + correctAnswer) 
+            else:
+                print("Ошибка")
+                await message.answer("Ошибка\n" + correctAnswer) 
+  
+        elif len_i == 4:
+            if (answerUser == (currentDictStroke[2]) or answerUser == (currentDictStroke[3]) 
+            or answerUser == (currentDictStroke[4]) or answerUser == (currentDictStroke[5])):
+                print("Правильно")
+                await message.answer("Правильно\n" + correctAnswer) 
+            else:
+                print("Ошибка")
+                await message.answer("Ошибка\n" + correctAnswer) 
+        
+        elif len_i == 5:
+            if (answerUser == (currentDictStroke[2]) or answerUser == (currentDictStroke[3]) 
+            or answerUser == (currentDictStroke[4]) or answerUser == (currentDictStroke[5])
+            or answerUser == (currentDictStroke[6])):
+                print("Правильно")
+                await message.answer("Правильно\n" + correctAnswer) 
+            else:
+                print("Ошибка")
+                await message.answer("Ошибка\n" + correctAnswer) 
 
     await send_welcome2(message) # поновой, как буддто пользователь ввёл "/go"
+
+
+
+async def SumSynonym(dict_string):
+    """Подсчёт кол-ва синонимов в строке словаря."""
+    # принимает строку словаря (список), возвращает число
+    # подсчитываем кол-во синонимов в каждой строке
+    # no_none_sub_i - кол-во непустых ячеек в строке
+    # len_i - получаемое колво синонимов
+    # Цикл бежит по строке и считает непустые ячейки, потом вычитаем 2, так как первые две ячейки
+    # это английское слово и транскрипция. 
+    no_none_sub_i = 0
+    len_i = 0
+    for sub_i in dict_string:
+        if(sub_i != ''):
+            no_none_sub_i = no_none_sub_i + 1
+    len_i = no_none_sub_i - 2
+    return len_i
     
 
 

@@ -20,6 +20,7 @@ len_col_2 = 15
 
 # читаем из таблици данные в наш список списков dict_words
 dict_words = []
+# read_file = open('dict_test.csv', 'r')
 read_file = open('dict.csv', 'r')
 for row in csv.reader(read_file):
     dict_words.append(row)
