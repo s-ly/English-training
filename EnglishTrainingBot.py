@@ -16,8 +16,8 @@ import random          # для раднома
 # При разработке использеум test, для работы my.
 # в git его игнорируем, а в место пушим зашифрованный архив.
 
-API_TOKEN = MyToken.myToken # рабочий бот
-# API_TOKEN = MyToken.testToken # тестовый бот
+# API_TOKEN = MyToken.myToken # рабочий бот
+API_TOKEN = MyToken.testToken # тестовый бот
 
 # Initialize bot and dispatcher
 bot = Bot(token=API_TOKEN)
@@ -36,7 +36,8 @@ async def send_welcome(message: types.Message):
 
 @dp.message_handler(commands=['go'])
 async def send_welcome2(message: types.Message):
-    """ Отвечает на команды /go. Создаёт строку вопроса. """
+    """ Отвечает на команды /go. Создаёт строку вопроса. 
+    questionRepeat - параметр для повторения вопроса."""
     dictRandomID = None # без этого появлялась ошибка выхода из диапазона (иногда)
     questionWord = None # обнуление старого вопроса (на всякий)
     randomDictStroke = None
@@ -163,7 +164,7 @@ async def send_test(message: types.Message):
     " Для этого не получится просто написать ответ. Необходимо воспользоваться" +
     " функцией Телеграм 'Ответить'. Ткните в сообщение бота, появится контекстное" +
     " выпадающее меню, в нём выберете 'Ответить' и теперь вводите свой ответ.\n\n" +
-    "English Training Bot version 2021.09.14\n" + 
+    "English Training Bot version 2021.09.16\n" + 
     "Разработка @SergeyLysov")    
 
 
@@ -199,10 +200,10 @@ async def CheckingResponse(message):
     # поиск признаков направления перевода
     if (message.reply_to_message.text).find("EngId:") == 0:
         translatDir = 2
-        print("Направление перевода с Eng на Rus")
+        # print("Направление перевода с Eng на Rus")
     elif (message.reply_to_message.text).find("RusId:") == 0:
         translatDir = 0
-        print("Направление перевода с Rus на Eng")
+        # print("Направление перевода с Rus на Eng")
     else:
         await message.answer("Хм, непонятный ответ... \nДля справки введи /help (с палочкой).")
         print("Хм, непонятный ответ...")
@@ -214,8 +215,8 @@ async def CheckingResponse(message):
     answerUser = message.text       # ответ пользователя
     answerUser = answerUser.lower() # всё с маленькой буквы
 
-    print("id загадываемого слова: " + str(questionBotWordId)) # печать id загадываемого слова
-    print("Загадываемое слово: "+ questionBotWord)             # печать загадываемого слова    
+    # print("id загадываемого слова: " + str(questionBotWordId)) # печать id загадываемого слова
+    # print("Загадываемое слово: "+ questionBotWord)             # печать загадываемого слова    
 
     currentDictStroke = EnglishTraining.dict_words[questionBotWordId] # текущая строка словаря (по id)
     len_i = 0 # получаемое кол-во синонимов (обнуление)
@@ -256,7 +257,10 @@ async def CheckingResponse(message):
             await message.answer("Правильно\n" + correctAnswer) 
         else:
             print("Ошибка")
-            await message.answer("Ошибка\n" + correctAnswer) 
+            await message.answer("Ошибка\n" + correctAnswer)             
+            await message.answer("Попробуй ещё")
+            await message.answer(message.reply_to_message.text) # повтор предыдущего сообщения
+            return # выход из метода
 
     # проверка ответа пользователья если с ENG на RUS в зависимости от кол-ва синонимов
     if translatDir == 2:
@@ -267,6 +271,9 @@ async def CheckingResponse(message):
             else:
                 print("Ошибка")
                 await message.answer("Ошибка\n" + correctAnswer) 
+                await message.answer("Попробуй ещё")
+                await message.answer(message.reply_to_message.text) # повтор предыдущего сообщения
+                return # выход из метода
 
         elif len_i == 2:
             if (answerUser == (currentDictStroke[2]) or answerUser == (currentDictStroke[3])):
@@ -275,6 +282,9 @@ async def CheckingResponse(message):
             else:
                 print("Ошибка")
                 await message.answer("Ошибка\n" + correctAnswer) 
+                await message.answer("Попробуй ещё")
+                await message.answer(message.reply_to_message.text) # повтор предыдущего сообщения
+                return # выход из метода
 
         elif len_i == 3:
             if (answerUser == (currentDictStroke[2]) or answerUser == (currentDictStroke[3]) 
@@ -284,6 +294,9 @@ async def CheckingResponse(message):
             else:
                 print("Ошибка")
                 await message.answer("Ошибка\n" + correctAnswer) 
+                await message.answer("Попробуй ещё")
+                await message.answer(message.reply_to_message.text) # повтор предыдущего сообщения
+                return # выход из метода
   
         elif len_i == 4:
             if (answerUser == (currentDictStroke[2]) or answerUser == (currentDictStroke[3]) 
@@ -293,6 +306,9 @@ async def CheckingResponse(message):
             else:
                 print("Ошибка")
                 await message.answer("Ошибка\n" + correctAnswer) 
+                await message.answer("Попробуй ещё")
+                await message.answer(message.reply_to_message.text) # повтор предыдущего сообщения
+                return # выход из метода
         
         elif len_i == 5:
             if (answerUser == (currentDictStroke[2]) or answerUser == (currentDictStroke[3]) 
@@ -303,6 +319,9 @@ async def CheckingResponse(message):
             else:
                 print("Ошибка")
                 await message.answer("Ошибка\n" + correctAnswer) 
+                await message.answer("Попробуй ещё")
+                await message.answer(message.reply_to_message.text) # повтор предыдущего сообщения
+                return # выход из метода
 
     await send_welcome2(message) # поновой, как буддто пользователь ввёл "/go"
 
