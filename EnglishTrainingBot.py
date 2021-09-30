@@ -39,7 +39,7 @@ async def send_start(message: types.Message, state: FSMContext):
     await InItStateUser(message, state)
 
     await message.answer("English Training\n" + 
-    "Тренируй английские слова!\nДля справки введи /help (с палочкой).")
+    "Тренируй английские слова!\nДля начала тренировки введи /go, справка /help (с палочкой).")
 
 @dp.message_handler(commands=['status'])
 async def userStatus(message: types.Message, state: FSMContext):
@@ -69,7 +69,6 @@ async def send_welcome2(message: types.Message, state: FSMContext):
     questionWord = None # обнуление старого вопроса (на всякий)
     randomDictStroke = None
     languageSelection = random.randint(0, 1) # случайный выбор языка
-    # print('-languageSelection-- ' + str(languageSelection))
     
     # приставка, подставляемая к слову id, что бы понимать направление перевода.
     languageSelectionPrefix = ""
@@ -95,7 +94,6 @@ async def send_welcome2(message: types.Message, state: FSMContext):
         len_i = 0 # получаемое кол-во синонимов (обнуление)    
         # Подсчёт кол-ва синонимов в строке словаря (мой метод) 
         len_i = await SumSynonym(randomDictStroke) 
-        # print('-----------' + str(len_i))
         if len_i == 1:
             questionWord = str(randomDictStroke[2])
         elif len_i == 2:
@@ -112,6 +110,7 @@ async def send_welcome2(message: types.Message, state: FSMContext):
             + ', ' + str(randomDictStroke[6]))
     # await message.answer(languageSelectionPrefix + "Id:" +  str(dictRandomID) + " " + str(questionWord))
     await message.answer(str(questionWord))
+    await state.update_data(questionWord=str(questionWord)) # статус пользователя: вопрос
     await state.update_data(userStatus='userHasQuestion') # статус пользователя: пользователю задан вопрос
     
 
@@ -130,7 +129,6 @@ async def send_test(message: types.Message, state: FSMContext):
     dict_word_bot = '' # формируемая для отправки боту строка
     sum_all_words = '' # строка для печати кол-ва всех слов в словаре
     subStrokeSum = 50  # кол-во подстрок в строке
-    # subStrokeSum = 6  # кол-во подстрок в строке
     len_col = 15       # ширина колонок
     
     for i in dict.dict_words:        
@@ -190,6 +188,12 @@ async def send_welcome(message: types.Message, state: FSMContext):
     # Если ответ есть, вызываем CheckingResponse(message) с передачей методу самого сообщения.
     # Иначе предлагаем пользователю посмотреть справку.
 
+    # логирование
+    logUser = str(message.chat.username)
+    logDate = str(message.date)
+    log = logDate + ' ' + logUser
+    print(log)
+
     # Проверяем, есть ли данные пользователя, если есть, какой статус пользователя.
     # Если пользователю задан вопрос, то вызываем метод проверки ответа пользователя.
     allUserData = await state.get_data()
@@ -198,177 +202,21 @@ async def send_welcome(message: types.Message, state: FSMContext):
         if (allUserData['userStatus'] == 'userHasQuestion'):
             await CheckingResponseState(message, state)
         else:
-            await message.answer("Хм, непонятно... \nДля справки введи /help (с палочкой).")  
+            await message.answer(Texts.miniHelp)  
     else:
-        await message.answer("Хм, непонятно... \nДля справки введи /help (с палочкой).")  
-
-    
-    
-
-    # if (message.reply_to_message != None):       
-    #     await message.answer("Использовать функцию 'Ответить' больше не нужно, просто пиши ответ.") 
-        # print("\nЗафиксирован ответ на сообщение.")
-        # print("дата ответа: " + str(message.reply_to_message.date))
-        # print("текст ответа: " + str(message.reply_to_message.text))
-        # print("User: " + (message.reply_to_message.chat.username))
-        # await CheckingResponse(message, state) # разбираем ответ пользователя.
-    
-
-
-
-async def CheckingResponse(message, state):
-    """Вызывается при наличии ответа пользователя."""
-    # Разбирает и проверяет ответ. 
-    # Обнаруживает в ответе кусок "EngId:" или "RusId:", и так определяет направление перевода,
-    # иначе прирывает метод. Сообщение распарсивается на части, срезами выделяется id слова,
-    # загаданное слово и сам ответ пользователя. Потом проверяется ответ пользователя
-    # на правильность. В результате проверки формируется ответ бота на ответ пользователя.
-    # В конце снова вызывает метод send_welcome2(message), дающий пользователю
-    # новое слово-задание.
-
-    translatDir = None # направление перевода
-    
-    # поиск признаков направления перевода
-    if (message.reply_to_message.text).find("EngId:") == 0:
-        translatDir = 2
-        # print("Направление перевода с Eng на Rus")
-    elif (message.reply_to_message.text).find("RusId:") == 0:
-        translatDir = 0
-        # print("Направление перевода с Rus на Eng")
-    else:
-        await message.answer("Хм, непонятный ответ... \nДля справки введи /help (с палочкой).")
-        print("Хм, непонятный ответ...")
-        return None
-
-    endId = (message.reply_to_message.text).find(" ")                 # поиск пробела после "id:"
-    questionBotWordId = int((message.reply_to_message.text)[6:endId]) # срез id 
-    questionBotWord = (message.reply_to_message.text)[(endId + 1):]   # срез загадываемого слова
-    answerUser = message.text       # ответ пользователя
-    answerUser = answerUser.lower() # всё с маленькой буквы
-
-    # print("id загадываемого слова: " + str(questionBotWordId)) # печать id загадываемого слова
-    # print("Загадываемое слово: "+ questionBotWord)             # печать загадываемого слова    
-
-    currentDictStroke = dict.dict_words[questionBotWordId] # текущая строка словаря (по id)
-    len_i = 0 # получаемое кол-во синонимов (обнуление)
-    
-    # Подсчёт кол-ва синонимов в строке словаря (мой метод) 
-    len_i = await SumSynonym(currentDictStroke) 
-    
-    # формируем строку правильного ответа в зависимости от кол-ва синонимов (len_i)
-    correctAnswer = '' # ответ бота
-    if len_i == 1:
-        correctAnswer = (str(currentDictStroke[0]) + " [" + str(currentDictStroke[1]) + "] " +
-        str(currentDictStroke[2]))
-
-    elif len_i == 2:
-        correctAnswer = (str(currentDictStroke[0]) + " [" + str(currentDictStroke[1]) + "] " +
-        str(currentDictStroke[2]) + ', ' + str(currentDictStroke[3]))
-
-    elif len_i == 3:
-        correctAnswer = (str(currentDictStroke[0]) + " [" + str(currentDictStroke[1]) + "] " +
-        str(currentDictStroke[2]) + ', ' + str(currentDictStroke[3]) + ', ' + 
-        str(currentDictStroke[4]))
-
-    elif len_i == 4:
-        correctAnswer = (str(currentDictStroke[0]) + " [" + str(currentDictStroke[1]) + "] " +
-        str(currentDictStroke[2]) + ', ' + str(currentDictStroke[3]) + ', ' + 
-        str(currentDictStroke[4]) + ', ' + str(currentDictStroke[5]))
-
-    elif len_i == 5:
-        correctAnswer = (str(currentDictStroke[0]) + " [" + str(currentDictStroke[1]) + "] " +
-        str(currentDictStroke[2]) + ', ' + str(currentDictStroke[3]) + ', ' + 
-        str(currentDictStroke[4]) + ', ' + str(currentDictStroke[5]) + ', ' +
-        str(currentDictStroke[6]))
-
-    # проверка ответа пользователья если с RUS на ENG
-    if translatDir == 0:
-        if (answerUser == (currentDictStroke[0])):
-            print("Правильно")
-            await message.answer("Правильно\n" + correctAnswer) 
-        else:
-            print("Ошибка")
-            await message.answer("Ошибка\n" + correctAnswer)             
-            await message.answer("Попробуй ещё")
-            await message.answer(message.reply_to_message.text) # повтор предыдущего сообщения
-            return # выход из метода
-
-    # проверка ответа пользователья если с ENG на RUS в зависимости от кол-ва синонимов
-    if translatDir == 2:
-        if len_i == 1:
-            if (answerUser == (currentDictStroke[2])):
-                print("Правильно")
-                await message.answer("Правильно\n" + correctAnswer) 
-            else:
-                print("Ошибка")
-                await message.answer("Ошибка\n" + correctAnswer) 
-                await message.answer("Попробуй ещё")
-                await message.answer(message.reply_to_message.text) # повтор предыдущего сообщения
-                return # выход из метода
-
-        elif len_i == 2:
-            if (answerUser == (currentDictStroke[2]) or answerUser == (currentDictStroke[3])):
-                print("Правильно")
-                await message.answer("Правильно\n" + correctAnswer) 
-            else:
-                print("Ошибка")
-                await message.answer("Ошибка\n" + correctAnswer) 
-                await message.answer("Попробуй ещё")
-                await message.answer(message.reply_to_message.text) # повтор предыдущего сообщения
-                return # выход из метода
-
-        elif len_i == 3:
-            if (answerUser == (currentDictStroke[2]) or answerUser == (currentDictStroke[3]) 
-            or answerUser == (currentDictStroke[4])):
-                print("Правильно")
-                await message.answer("Правильно\n" + correctAnswer) 
-            else:
-                print("Ошибка")
-                await message.answer("Ошибка\n" + correctAnswer) 
-                await message.answer("Попробуй ещё")
-                await message.answer(message.reply_to_message.text) # повтор предыдущего сообщения
-                return # выход из метода
-  
-        elif len_i == 4:
-            if (answerUser == (currentDictStroke[2]) or answerUser == (currentDictStroke[3]) 
-            or answerUser == (currentDictStroke[4]) or answerUser == (currentDictStroke[5])):
-                print("Правильно")
-                await message.answer("Правильно\n" + correctAnswer) 
-            else:
-                print("Ошибка")
-                await message.answer("Ошибка\n" + correctAnswer) 
-                await message.answer("Попробуй ещё")
-                await message.answer(message.reply_to_message.text) # повтор предыдущего сообщения
-                return # выход из метода
-        
-        elif len_i == 5:
-            if (answerUser == (currentDictStroke[2]) or answerUser == (currentDictStroke[3]) 
-            or answerUser == (currentDictStroke[4]) or answerUser == (currentDictStroke[5])
-            or answerUser == (currentDictStroke[6])):
-                print("Правильно")
-                await message.answer("Правильно\n" + correctAnswer) 
-            else:
-                print("Ошибка")
-                await message.answer("Ошибка\n" + correctAnswer) 
-                await message.answer("Попробуй ещё")
-                await message.answer(message.reply_to_message.text) # повтор предыдущего сообщения
-                return # выход из метода
-
-    await send_welcome2(message, state) # поновой, как буддто пользователь ввёл "/go"
+        await message.answer(Texts.miniHelp)  
 
 
 
 async def CheckingResponseState(message, state):
     """Проверка ответа пользователя с использованием данных state."""
-    print('Пользователь имеет вопрос.')
-    print("Проверка прямого ответа пользователя.")
     allUserData = await state.get_data() # загружаем статусы пользователя
     answerUser = message.text       # ответ пользователя
     answerUser = answerUser.lower() # всё с маленькой буквы
 
     currentDictStroke = dict.dict_words[allUserData['idWord']] # текущая строка словаря 
-    print(str(currentDictStroke))
     translatDir = allUserData['translatDir'] # текущее направление перевода
+    questionWord = allUserData['questionWord'] # текущий вопрос
 
     len_i = 0 # получаемое кол-во синонимов (обнуление)
     
@@ -404,74 +252,62 @@ async def CheckingResponseState(message, state):
     # проверка ответа пользователья если с RUS на ENG
     if translatDir == 'Rus':
         if (answerUser == (currentDictStroke[0])):
-            print("Правильно")
             await message.answer("Правильно\n" + correctAnswer) 
         else:
-            print("Ошибка")
             await message.answer("Ошибка\n" + correctAnswer)             
             await message.answer("Попробуй ещё")
-            # await message.answer(message.reply_to_message.text) # повтор предыдущего сообщения
+            await message.answer(questionWord) # повтор вопроса
             return # выход из метода
     
     # проверка ответа пользователья если с ENG на RUS в зависимости от кол-ва синонимов
     if translatDir == 'Eng':
         if len_i == 1:
             if (answerUser == (currentDictStroke[2])):
-                print("Правильно")
                 await message.answer("Правильно\n" + correctAnswer) 
             else:
-                print("Ошибка")
                 await message.answer("Ошибка\n" + correctAnswer) 
                 await message.answer("Попробуй ещё")
-                # await message.answer(message.reply_to_message.text) # повтор предыдущего сообщения
+                await message.answer(questionWord) # повтор вопроса
                 return # выход из метода
 
         elif len_i == 2:
             if (answerUser == (currentDictStroke[2]) or answerUser == (currentDictStroke[3])):
-                print("Правильно")
                 await message.answer("Правильно\n" + correctAnswer) 
             else:
-                print("Ошибка")
                 await message.answer("Ошибка\n" + correctAnswer) 
                 await message.answer("Попробуй ещё")
-                # await message.answer(message.reply_to_message.text) # повтор предыдущего сообщения
+                await message.answer(questionWord) # повтор вопроса
                 return # выход из метода
 
         elif len_i == 3:
             if (answerUser == (currentDictStroke[2]) or answerUser == (currentDictStroke[3]) 
             or answerUser == (currentDictStroke[4])):
-                print("Правильно")
                 await message.answer("Правильно\n" + correctAnswer) 
             else:
-                print("Ошибка")
                 await message.answer("Ошибка\n" + correctAnswer) 
                 await message.answer("Попробуй ещё")
-                # await message.answer(message.reply_to_message.text) # повтор предыдущего сообщения
+                await message.answer(questionWord) # повтор вопроса
                 return # выход из метода
   
         elif len_i == 4:
             if (answerUser == (currentDictStroke[2]) or answerUser == (currentDictStroke[3]) 
             or answerUser == (currentDictStroke[4]) or answerUser == (currentDictStroke[5])):
-                print("Правильно")
                 await message.answer("Правильно\n" + correctAnswer) 
             else:
-                print("Ошибка")
                 await message.answer("Ошибка\n" + correctAnswer) 
                 await message.answer("Попробуй ещё")
-                # await message.answer(message.reply_to_message.text) # повтор предыдущего сообщения
+                await message.answer(questionWord) # повтор вопроса
                 return # выход из метода
         
         elif len_i == 5:
             if (answerUser == (currentDictStroke[2]) or answerUser == (currentDictStroke[3]) 
             or answerUser == (currentDictStroke[4]) or answerUser == (currentDictStroke[5])
             or answerUser == (currentDictStroke[6])):
-                print("Правильно")
                 await message.answer("Правильно\n" + correctAnswer) 
             else:
-                print("Ошибка")
                 await message.answer("Ошибка\n" + correctAnswer) 
                 await message.answer("Попробуй ещё")
-                # await message.answer(message.reply_to_message.text) # повтор предыдущего сообщения
+                await message.answer(questionWord) # повтор вопроса
                 return # выход из метода
 
     await send_welcome2(message, state) # поновой, как буддто пользователь ввёл "/go"
@@ -500,6 +336,7 @@ async def InItStateUser(message: types.Message, state: FSMContext):
     await state.update_data(userStatus='registr')
     await state.update_data(idWord='no')
     await state.update_data(translatDir='no')
+    await state.update_data(questionWord='no')
 
 
 if __name__ == '__main__':
