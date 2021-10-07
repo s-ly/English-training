@@ -11,6 +11,7 @@ from aiogram.utils.markdown import text, bold, italic, code, underline, striketh
 import MyToken         # содержит токен
 import dict            # мой модуль, читает словарь из файла
 import Texts           # мой модуль, хранит текст
+import log             # мой модуль, лог
 import random          # для раднома
 
 # Импрорт токена из файла MyToken.py (лежит в раб каталоге)
@@ -191,8 +192,8 @@ async def send_welcome(message: types.Message, state: FSMContext):
     # логирование
     logUser = str(message.chat.username)
     logDate = str(message.date)
-    log = logDate + ' ' + logUser
-    print(log)
+    logMessage = logDate + ' ' + logUser
+    await log.log_message(logMessage) # лог, в моём модуле
 
     # Проверяем, есть ли данные пользователя, если есть, какой статус пользователя.
     # Если пользователю задан вопрос, то вызываем метод проверки ответа пользователя.
