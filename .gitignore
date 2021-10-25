@@ -1,8 +1,6 @@
-/dist/
 /lk/
 /logo/
 /SSH/
 /__pycache__/
 MyToken.py
-dict_test.csv
 app.log

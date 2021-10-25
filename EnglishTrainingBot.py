@@ -27,8 +27,8 @@ import random          # для раднома
 # При разработке использеум test, для работы my.
 # в git его игнорируем, а в место пушим зашифрованный архив.
 
-API_TOKEN = MyToken.myToken # рабочий бот
-# API_TOKEN = MyToken.testToken # тестовый бот
+# API_TOKEN = MyToken.myToken # рабочий бот
+API_TOKEN = MyToken.testToken # тестовый бот
 
 # Initialize bot and dispatcher
 storage = MemoryStorage() # место хранения контекста в ОЗУ
@@ -85,7 +85,7 @@ async def send_start(message: types.Message, state: FSMContext):
     """ Отвечает на команды /start """
     # Второй параметр FSMContext хранит контекст 
     
-    await InItStateUser(message, state) # Инициализация контекста (данных пользователя)
+    await func.InItStateUser(message, state)
 
     await message.answer("English Training\n" + 
     "Тренируй английские слова!\nДля начала тренировки введи /go, справка /help (с палочкой).",
@@ -116,7 +116,8 @@ async def send_welcome2(message: types.Message, state: FSMContext):
     questionRepeat - параметр для повторения вопроса."""
 
     # Инициализация контекста (данных пользователя)
-    await InItStateUser(message, state)
+    await func.InItStateUser(message, state)
+
     allUserData = await state.get_data() # загружаем статусы пользователя
 
     dictRandomID = None # без этого появлялась ошибка выхода из диапазона (иногда)
@@ -351,33 +352,6 @@ async def CheckingResponseState(message, state):
                 return # выход из метода
 
     await send_welcome2(message, state) # поновой, как буддто пользователь ввёл "/go"
-
-
-    
-async def InItStateUser(message: types.Message, state: FSMContext):
-    """ Инициирует данные пользователя """
-    # Инициализация контекста (данных пользователя)
-    # если инициализации ещё небыло
-    allUserData = await state.get_data() # загружаем статусы пользователя
-
-    if ('userStatus' in allUserData):
-        # print('инициация уже была, ')
-        # обнуляем только то что нужно (кроме показа клавиатуры)
-        await state.update_data(userName=message.chat.username)
-        await state.update_data(userStatus='registr')
-        await state.update_data(idWord='no')
-        await state.update_data(translatDir='no')
-        await state.update_data(questionWord='no')
-        # print(str(allUserData['showkeyboard']))
-    else:
-        # print('инициируем')
-        # инициируем всё
-        await state.update_data(userName=message.chat.username)
-        await state.update_data(userStatus='registr')
-        await state.update_data(idWord='no')
-        await state.update_data(translatDir='no')
-        await state.update_data(questionWord='no')
-        await state.update_data(showkeyboard='true')
 
 
 

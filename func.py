@@ -1,5 +1,8 @@
 # Модуль содержит функции для бота
 
+from aiogram import types
+from aiogram.dispatcher import FSMContext
+
 import csv      # для чтения таблици
 
 # читаем из таблици данные в наш список списков dict_words
@@ -72,3 +75,30 @@ async def TooltipGenerator(currentDictStroke, translatDir):
     firstLetter = word[0]       # первая буква слова
     tooltip = firstLetter + ('*' * (numberOfLetters-1))  
     return tooltip
+
+
+
+async def InItStateUser(message: types.Message, state: FSMContext):
+    """ Инициирует данные пользователя """
+    # Инициализация контекста (данных пользователя)
+    # если инициализации ещё небыло
+    allUserData = await state.get_data() # загружаем статусы пользователя
+
+    if ('userStatus' in allUserData):
+        # print('инициация уже была, ')
+        # обнуляем только то что нужно (кроме показа клавиатуры)
+        await state.update_data(userName=message.chat.username)
+        await state.update_data(userStatus='registr')
+        await state.update_data(idWord='no')
+        await state.update_data(translatDir='no')
+        await state.update_data(questionWord='no')
+        # print(str(allUserData['showkeyboard']))
+    else:
+        # print('инициируем')
+        # инициируем всё
+        await state.update_data(userName=message.chat.username)
+        await state.update_data(userStatus='registr')
+        await state.update_data(idWord='no')
+        await state.update_data(translatDir='no')
+        await state.update_data(questionWord='no')
+        await state.update_data(showkeyboard='true')
