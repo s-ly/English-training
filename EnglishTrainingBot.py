@@ -20,6 +20,9 @@ import Texts           # мой модуль, хранит текст
 import log             # мой модуль, лог
 import random          # для раднома
 
+
+
+
 # Импрорт токена из файла MyToken.py (лежит в раб каталоге)
 # Файл MyToken.py содержит две строки:
 # myToken = 'тут токен'
@@ -35,8 +38,6 @@ storage = MemoryStorage() # место хранения контекста в О
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot, storage=storage)
 
-
-
 # создаём коавиатуру и добавляем кнопки
 # resize_keyboard=True - уменьшает кнопки
 # one_time_keyboard=True - скрыть кнопку после нажатия
@@ -45,6 +46,8 @@ keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
 button1 = KeyboardButton('* Не помню *')
 button2 = KeyboardButton('* Подсказка *')
 keyboard.add(button1, button2)
+
+
 
 
 # (Text(equals="* Не помню *")) проверяется полное сооьветствие с текстом
@@ -67,6 +70,7 @@ async def with_puree(message: types.Message, state: FSMContext):
 
 
 
+
 # (Text(equals="* Подсказка *")) проверяется полное сооьветствие с текстом
 @dp.message_handler(Text(equals="* Подсказка *"))
 async def with_puree(message: types.Message, state: FSMContext):
@@ -76,6 +80,7 @@ async def with_puree(message: types.Message, state: FSMContext):
     translatDir = allUserData['translatDir'] # текущее направление перевода
     tooltip = await func.TooltipGenerator(currentDictStroke, translatDir) # генератор подсказок
     await message.answer(tooltip) 
+
 
 
 
@@ -94,6 +99,7 @@ async def send_start(message: types.Message, state: FSMContext):
 
 
 
+
 @dp.message_handler(commands=['status'])
 async def userStatus(message: types.Message, state: FSMContext):
     """ Выводит содеожание контекста пользователя"""
@@ -107,6 +113,7 @@ async def userStatus(message: types.Message, state: FSMContext):
         print('Данных нет')
         await message.answer('Данных нет')
         await send_start(message, state) # поновой, как буддто пользователь ввёл "/start"
+
 
 
 
@@ -176,6 +183,7 @@ async def send_welcome2(message: types.Message, state: FSMContext):
     
     
 
+
 # Берёт из модуля func список слов dict_words. 
 # Метод code() делает шрифт моноширным.
 # Формирует строки и конкатинирует их с символом новой строки.
@@ -217,8 +225,7 @@ async def send_test(message: types.Message, state: FSMContext):
             i[2] + ', ' + i[3] + ', ' + i[4] + ', ' + i[5] + "\n")
         if len_i == 5:      
             dict_word_bot = dict_word_bot + (i[0] + (" " * dobavka_col_0) +
-            i[2] + ', ' + i[3] + ', ' + i[4] + ', ' + i[5] + ', ' + i[6] + "\n")
-        
+            i[2] + ', ' + i[3] + ', ' + i[4] + ', ' + i[5] + ', ' + i[6] + "\n")        
         
         # ограничение кол-ва строк, передаваемых ботом за раз
         if (sum_strok == subStrokeSum):
@@ -233,12 +240,15 @@ async def send_test(message: types.Message, state: FSMContext):
     sum_all_strok = 0 # обнуляем счётчик всех слов
 
 
+
+
 # ReplyKeyboardRemove() - удаляет клавиатуру из меню
 @dp.message_handler(commands=['help'])
 async def send_test(message: types.Message, state: FSMContext):
     """ Отвечает на команды /help. """
     await message.answer(Texts.answerHelp, reply_markup=ReplyKeyboardRemove()) # текст из модуля    
     await state.update_data(showkeyboard='true') # теперь клава буду вызвана при /go
+
 
 
 
@@ -262,7 +272,13 @@ async def send_welcome(message: types.Message, state: FSMContext):
 
     if ('userName' in allUserData):
         if (allUserData['userStatus'] == 'userHasQuestion'):
-            await CheckingResponseState(message, state)
+            # Проверка ответа пользователя
+            userResponseStatutes = await func.CheckingResponseState(message, state) 
+
+            if (userResponseStatutes == True):
+                # Если пользователь ответил правильно, то новый вопрос,
+                # как буддто пользователь ввёл "/go"
+                await send_welcome2(message, state) 
         else:
             await message.answer(Texts.miniHelp, reply_markup=ReplyKeyboardRemove())  
             await state.update_data(showkeyboard='true') # теперь клава буду вызвана при /go
@@ -270,88 +286,6 @@ async def send_welcome(message: types.Message, state: FSMContext):
         await message.answer(Texts.miniHelp, reply_markup=ReplyKeyboardRemove())  
         await state.update_data(showkeyboard='true') # теперь клава буду вызвана при /go
 
-
-
-async def CheckingResponseState(message, state):
-    """Проверка ответа пользователя с использованием данных state."""
-    allUserData = await state.get_data() # загружаем статусы пользователя
-    answerUser = message.text       # ответ пользователя
-    answerUser = answerUser.lower() # всё с маленькой буквы
-
-    currentDictStroke = func.dict_words[allUserData['idWord']] # текущая строка словаря 
-    translatDir = allUserData['translatDir'] # текущее направление перевода
-    questionWord = allUserData['questionWord'] # текущий вопрос
-
-    len_i = 0 # получаемое кол-во синонимов (обнуление)
-    
-    # Подсчёт кол-ва синонимов в строке словаря (мой метод) 
-    len_i = await func.SumSynonym(currentDictStroke) 
-
-    # формируем строку правильного ответа в зависимости от кол-ва синонимов (len_i)
-    correctAnswer = await func.CorrectAnswer(currentDictStroke, len_i)
-
-    # проверка ответа пользователья если с RUS на ENG
-    if translatDir == 'Rus':
-        if (answerUser == (currentDictStroke[0])):
-            await message.answer("Правильно\n" + correctAnswer) 
-        else:
-            await message.answer("Ошибка\n" + correctAnswer)             
-            await message.answer("Попробуй ещё")
-            await message.answer('? ' + str(questionWord)) # повтор вопроса
-            return # выход из метода
-    
-    # проверка ответа пользователья если с ENG на RUS в зависимости от кол-ва синонимов
-    if translatDir == 'Eng':
-        if len_i == 1:
-            if (answerUser == (currentDictStroke[2])):
-                await message.answer("Правильно\n" + correctAnswer) 
-            else:
-                await message.answer("Ошибка\n" + correctAnswer) 
-                await message.answer("Попробуй ещё")
-                await message.answer('? ' + str(questionWord)) # повтор вопроса
-                return # выход из метода
-
-        elif len_i == 2:
-            if (answerUser == (currentDictStroke[2]) or answerUser == (currentDictStroke[3])):
-                await message.answer("Правильно\n" + correctAnswer) 
-            else:
-                await message.answer("Ошибка\n" + correctAnswer) 
-                await message.answer("Попробуй ещё")
-                await message.answer('? ' + str(questionWord)) # повтор вопроса 
-                return # выход из метода
-
-        elif len_i == 3:
-            if (answerUser == (currentDictStroke[2]) or answerUser == (currentDictStroke[3]) 
-            or answerUser == (currentDictStroke[4])):
-                await message.answer("Правильно\n" + correctAnswer) 
-            else:
-                await message.answer("Ошибка\n" + correctAnswer) 
-                await message.answer("Попробуй ещё")                
-                await message.answer('? ' + str(questionWord)) # повтор вопроса
-                return # выход из метода
-  
-        elif len_i == 4:
-            if (answerUser == (currentDictStroke[2]) or answerUser == (currentDictStroke[3]) 
-            or answerUser == (currentDictStroke[4]) or answerUser == (currentDictStroke[5])):
-                await message.answer("Правильно\n" + correctAnswer) 
-            else:
-                await message.answer("Ошибка\n" + correctAnswer) 
-                await message.answer("Попробуй ещё")
-                await message.answer('? ' + str(questionWord)) # повтор вопроса
-                return # выход из метода
-        
-        elif len_i == 5:
-            if (answerUser == (currentDictStroke[2]) or answerUser == (currentDictStroke[3]) 
-            or answerUser == (currentDictStroke[4]) or answerUser == (currentDictStroke[5])
-            or answerUser == (currentDictStroke[6])):
-                await message.answer("Правильно\n" + correctAnswer) 
-            else:
-                await message.answer("Ошибка\n" + correctAnswer) 
-                await message.answer("Попробуй ещё")
-                await message.answer('? ' + str(questionWord)) # повтор вопроса
-                return # выход из метода
-
-    await send_welcome2(message, state) # поновой, как буддто пользователь ввёл "/go"
 
 
 
