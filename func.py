@@ -3,7 +3,14 @@
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 
-import csv      # для чтения таблици
+import csv       # для чтения таблици
+import random    # для раднома
+
+# для кнопок
+from aiogram.types.reply_keyboard import KeyboardButton, ReplyKeyboardRemove, ReplyKeyboardMarkup
+
+# дополнительно для форматирования
+from aiogram.utils.markdown import italic
 
 
 
@@ -210,6 +217,65 @@ async def CheckingResponseState(message, state) -> bool:
 
 
 
+# keyboard: ReplyKeyboardMarkup - принимает клавиатуру
+async def goFunc(message: types.Message, state: FSMContext, keyboard: ReplyKeyboardMarkup):
+    """ Отвечает на команды /go. Создаёт строку вопроса."""
+    await InItStateUser(message, state)  # Инициализация контекста (данных пользователя)
+    allUserData = await state.get_data() # загружаем статусы пользователя
+
+    dictRandomID = None # без этого появлялась ошибка выхода из диапазона (иногда)
+    questionWord = None # обнуление старого вопроса (на всякий)
+    randomDictStroke = None
+    languageSelection = random.randint(0, 1)         # случайный выбор языка
+    dictLen = len(dict_words)                        # кол-во слов в словаре
+    dictRandomID = random.randint(0, dictLen - 1)    # случайное слово
+    await state.update_data(idWord=dictRandomID)     # случайное слово в статус пользователя
+    randomDictStroke = dict_words[dictRandomID]      # случайная строка
+
+    # фрмирование строки вопроса изходя из случайно выбранного направления перевода
+    # если с русского то учитывается кол-во синонимов
+    if languageSelection == 0:
+        await state.update_data(translatDir='Eng') # направление перевода в статус пользователя
+
+        questionWord = str(randomDictStroke[0])
+
+    elif languageSelection == 1:
+        await state.update_data(translatDir='Rus') # направление перевода в статус пользователя
+
+        len_i = 0 # получаемое кол-во синонимов (обнуление)    
+        # Подсчёт кол-ва синонимов в строке словаря (мой метод) 
+        len_i = await SumSynonym(randomDictStroke) 
+        if len_i == 1:
+            questionWord = str(randomDictStroke[2])
+        elif len_i == 2:
+            questionWord = str(randomDictStroke[2]) + ', ' + str(randomDictStroke[3])
+        elif len_i == 3:
+            questionWord = (str(randomDictStroke[2]) + ', ' + str(randomDictStroke[3]) 
+            + ', ' + str(randomDictStroke[4]))
+        elif len_i == 4:
+            questionWord = (str(randomDictStroke[2]) + ', ' + str(randomDictStroke[3]) 
+            + ', ' + str(randomDictStroke[4]) + ', ' + str(randomDictStroke[5]))
+        elif len_i == 5:
+            questionWord = (str(randomDictStroke[2]) + ', ' + str(randomDictStroke[3]) 
+            + ', ' + str(randomDictStroke[4]) + ', ' + str(randomDictStroke[5])
+            + ', ' + str(randomDictStroke[6]))
+    
+    # Идея в том, что бы клавиатура всплыла только один раз, а потом не надоедала,
+    # а просто была в виде значка, для этого используем FSM параметр showkeyboard='true'.
+    if (allUserData['showkeyboard'] == 'true'):
+        await message.answer('? ' + str(questionWord),
+        reply_markup=keyboard) # параметр передаёт клавиатуру
+        
+        # подсказка про меню (с формаьтрованием)
+        await message.answer(italic('(кнопка с подсказкой -> квадратик справа)'),
+        parse_mode=types.ParseMode.MARKDOWN_V2) 
+
+        await state.update_data(showkeyboard='false') # больше показывать клавиатуру не надо
+    else:
+        await message.answer('? ' + str(questionWord)) # без клавиатуры
+
+    await state.update_data(questionWord=str(questionWord)) # статус пользователя: вопрос
+    await state.update_data(userStatus='userHasQuestion') # статус пользователя: пользователю задан вопрос
 
 
 
