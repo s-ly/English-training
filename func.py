@@ -81,7 +81,6 @@ async def SumSynonym(dict_string):
 
 async def TooltipGenerator(currentDictStroke, translatDir):
     """генератор подсказок"""
-    # tooltip = str(currentDictStroke) + str(translatDir)
     if (translatDir == 'Rus'):
         word = currentDictStroke[0] # английское слово
     elif (translatDir == 'Eng'):
@@ -91,6 +90,39 @@ async def TooltipGenerator(currentDictStroke, translatDir):
     firstLetter = word[0]       # первая буква слова
     tooltip = firstLetter + ('*' * (numberOfLetters-1))  
     return tooltip
+
+
+
+
+async def TooltipGenerator2(currentDictStroke, translatDir):
+    """генератор дополнительных подсказок"""
+    if (translatDir == 'Rus'):
+        word = currentDictStroke[0] # английское слово
+    elif (translatDir == 'Eng'):
+        word = currentDictStroke[2] # русское слово
+    numberOfLetters = len(word) # длинна слова
+
+    if (numberOfLetters == 1):
+        firstLetter = word[0]        # первая буква слова
+        tooltip = firstLetter
+        return tooltip
+    elif (numberOfLetters == 2):
+        firstLetter = word[0]        # первая буква слова
+        secondLetter = word[1]       # вторая буква слова
+        tooltip = firstLetter + secondLetter
+        return tooltip
+    elif (numberOfLetters == 3):
+        firstLetter = word[0]        # первая буква слова
+        secondLetter = word[1]       # вторая буква слова
+        lastLetter = word[-1]        # последняя (третья) буква слова
+        tooltip = firstLetter + secondLetter + lastLetter
+        return tooltip
+    else:
+        firstLetter = word[0]        # первая буква слова
+        secondLetter = word[1]       # вторая буква слова
+        lastLetter = word[-1]        # последняя буква слова
+        tooltip = firstLetter + secondLetter + ('*' * (numberOfLetters-3)) + lastLetter
+        return tooltip
 
 
 

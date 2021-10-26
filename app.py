@@ -30,8 +30,8 @@ import random          # для раднома
 # При разработке использеум test, для работы my.
 # в git его игнорируем, а в место пушим зашифрованный архив.
 
-# API_TOKEN = MyToken.myToken # рабочий бот
-API_TOKEN = MyToken.testToken # тестовый бот
+API_TOKEN = MyToken.myToken # рабочий бот
+# API_TOKEN = MyToken.testToken # тестовый бот
 
 # Initialize bot and dispatcher
 storage = MemoryStorage() # место хранения контекста в ОЗУ
@@ -43,14 +43,15 @@ dp = Dispatcher(bot, storage=storage)
 # one_time_keyboard=True - скрыть кнопку после нажатия
 # keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
 keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
-button1 = KeyboardButton('* Не помню *')
-button2 = KeyboardButton('* Подсказка *')
-keyboard.add(button1, button2)
+button1 = KeyboardButton('* Не помню')
+button2 = KeyboardButton('* Подсказка')
+button3 = KeyboardButton('* Ещё подсказка')
+keyboard.add(button1, button2, button3)
 
 
 
 
-@dp.message_handler(Text(equals="* Не помню *"))
+@dp.message_handler(Text(equals="* Не помню"))
 async def with_puree(message: types.Message, state: FSMContext):
     """ Отвечает на текс '* Не помню *'"""
     # (Text(equals="* Не помню *")) проверяется полное сооьветствие с текстом
@@ -72,15 +73,29 @@ async def with_puree(message: types.Message, state: FSMContext):
 
 
 
-@dp.message_handler(Text(equals="* Подсказка *"))
+@dp.message_handler(Text(equals="* Подсказка"))
 async def with_puree(message: types.Message, state: FSMContext):
     """ Отвечает на текс '* Подсказка *'"""
-    # (Text(equals="* Подсказка *")) проверяется полное сооьветствие с текстом
+    # (Text(equals="* Подсказка *")) проверяется полное соответствие с текстом
 
     allUserData = await state.get_data() # загружаем статусы пользователя
     currentDictStroke = func.dict_words[allUserData['idWord']] # текущая строка словаря 
     translatDir = allUserData['translatDir'] # текущее направление перевода
     tooltip = await func.TooltipGenerator(currentDictStroke, translatDir) # генератор подсказок
+    await message.answer(tooltip) 
+
+
+
+
+@dp.message_handler(Text(equals="* Ещё подсказка"))
+async def with_puree(message: types.Message, state: FSMContext):
+    """ Отвечает на текс '* Подсказка *'"""
+    # (Text(equals="* Подсказка *")) проверяется полное соответствие с текстом
+
+    allUserData = await state.get_data() # загружаем статусы пользователя
+    currentDictStroke = func.dict_words[allUserData['idWord']] # текущая строка словаря 
+    translatDir = allUserData['translatDir'] # текущее направление перевода
+    tooltip = await func.TooltipGenerator2(currentDictStroke, translatDir) # генератор подсказок
     await message.answer(tooltip) 
 
 
