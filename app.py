@@ -55,7 +55,7 @@ async def with_puree(message: types.Message, state: FSMContext):
     """ Отвечает на текс '* Не помню *'"""
     # (Text(equals="* Не помню *")) проверяется полное сооьветствие с текстом
     # ReplyKeyboardRemove() - удаляет клавиатуру из меню
-    
+
     allUserData = await state.get_data() # загружаем статусы пользователя
     questionWord = allUserData['questionWord'] # текущий вопрос
     currentDictStroke = func.dict_words[allUserData['idWord']] # текущая строка словаря 
@@ -144,39 +144,14 @@ async def send_test(message: types.Message, state: FSMContext):
 
 
 
-# ReplyKeyboardRemove() - удаляет клавиатуру из меню
-# Проверяет, нет ли в сообщении ответа (кнопка ответить).
-# Если ответ есть, вызываем CheckingResponse(message) с передачей методу самого сообщения.
-# Иначе предлагаем пользователю посмотреть справку.
 @dp.message_handler()
 async def send_welcome(message: types.Message, state: FSMContext):
     """ Отвечает на любые сообщения."""
-
-    # логирование
-    logUser = str(message.chat.username)
-    logDate = str(message.date)
-    logMessage = logDate + ' ' + logUser
-    await log.log_message(logMessage) # лог, в моём модуле
-
-    # Проверяем, есть ли данные пользователя, если есть, какой статус пользователя.
-    # Если пользователю задан вопрос, то вызываем метод проверки ответа пользователя.
-    allUserData = await state.get_data()
-
-    if ('userName' in allUserData):
-        if (allUserData['userStatus'] == 'userHasQuestion'):
-            # Проверка ответа пользователя
-            userResponseStatutes = await func.CheckingResponseState(message, state) 
-
-            if (userResponseStatutes == True):
-                # Если пользователь ответил правильно, то новый вопрос,
-                # как буддто пользователь ввёл "/go"
-                await send_welcome2(message, state) 
-        else:
-            await message.answer(Texts.miniHelp, reply_markup=ReplyKeyboardRemove())  
-            await state.update_data(showkeyboard='true') # теперь клава буду вызвана при /go
-    else:
-        await message.answer(Texts.miniHelp, reply_markup=ReplyKeyboardRemove())  
-        await state.update_data(showkeyboard='true') # теперь клава буду вызвана при /go
+    userResponse = await func.RespondsAnyMessages(message, state) 
+    if (userResponse == True):
+        # Если пользователь ответил правильно, то новый вопрос,
+        # как буддто пользователь ввёл "/go"
+        await send_welcome2(message, state)
 
 
 

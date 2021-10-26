@@ -5,6 +5,8 @@ from aiogram.dispatcher import FSMContext
 
 import csv       # для чтения таблици
 import random    # для раднома
+import log       # мой модуль, лог
+import Texts     # мой модуль, хранит текст
 
 # для кнопок
 from aiogram.types.reply_keyboard import KeyboardButton, ReplyKeyboardRemove, ReplyKeyboardMarkup
@@ -57,14 +59,15 @@ async def CorrectAnswer(currentDictStroke, len_i):
 
 
 
-# принимает строку словаря (список), возвращает число
-# подсчитываем кол-во синонимов в каждой строке
-# no_none_sub_i - кол-во непустых ячеек в строке
-# len_i - получаемое колво синонимов
-# Цикл бежит по строке и считает непустые ячейки, потом вычитаем 2, так как первые две ячейки
-# это английское слово и транскрипция. 
 async def SumSynonym(dict_string):
     """Подсчёт кол-ва синонимов в строке словаря."""
+    # принимает строку словаря (список), возвращает число
+    # подсчитываем кол-во синонимов в каждой строке
+    # no_none_sub_i - кол-во непустых ячеек в строке
+    # len_i - получаемое колво синонимов
+    # Цикл бежит по строке и считает непустые ячейки, потом вычитаем 2, так как первые две ячейки
+    # это английское слово и транскрипция. 
+
     no_none_sub_i = 0
     len_i = 0
     for sub_i in dict_string:
@@ -217,9 +220,10 @@ async def CheckingResponseState(message, state) -> bool:
 
 
 
-# keyboard: ReplyKeyboardMarkup - принимает клавиатуру
 async def goFunc(message: types.Message, state: FSMContext, keyboard: ReplyKeyboardMarkup):
     """ Отвечает на команды /go. Создаёт строку вопроса."""
+    # keyboard: ReplyKeyboardMarkup - принимает клавиатуру
+
     await InItStateUser(message, state)  # Инициализация контекста (данных пользователя)
     allUserData = await state.get_data() # загружаем статусы пользователя
 
@@ -334,3 +338,47 @@ async def dictFunc(message: types.Message):
     sum_all_words = sum_all_words + 'Всего слов в словаре: ' + str(sum_all_strok)
     await message.answer(code(sum_all_words), parse_mode=types.ParseMode.MARKDOWN_V2) 
     sum_all_strok = 0 # обнуляем счётчик всех слов
+
+
+
+
+async def RespondsAnyMessages(message: types.Message, state: FSMContext) -> bool:
+    """ Отвечает на любые сообщения."""
+    # ReplyKeyboardRemove() - удаляет клавиатуру из меню
+    # Проверяет, нет ли в сообщении ответа (кнопка ответить).
+    # Если ответ есть, вызываем CheckingResponse(message) с передачей методу самого сообщения.
+    # Иначе предлагаем пользователю посмотреть справку.
+
+    # логирование
+    logUser = str(message.chat.username)
+    logDate = str(message.date)
+    logMessage = logDate + ' ' + logUser
+    await log.log_message(logMessage) # лог, в моём модуле
+
+    # флаг, если подбзователь ответит правило, то = True
+    # его вернёт этот метод
+    userAnswerCorrect: bool = None
+
+    # Проверяем, есть ли данные пользователя, если есть, какой статус пользователя.
+    # Если пользователю задан вопрос, то вызываем метод проверки ответа пользователя.
+    allUserData = await state.get_data()
+
+    if ('userName' in allUserData):
+        if (allUserData['userStatus'] == 'userHasQuestion'):
+            # Проверка ответа пользователя
+            userResponseStatutes = await CheckingResponseState(message, state) 
+
+            if (userResponseStatutes == True):
+                # Если пользователь ответил правильно, то новый вопрос,
+                # как буддто пользователь ввёл "/go"
+                userAnswerCorrect = True
+        else:
+            userAnswerCorrect = False
+            await message.answer(Texts.miniHelp, reply_markup=ReplyKeyboardRemove())  
+            await state.update_data(showkeyboard='true') # теперь клава буду вызвана при /go
+    else:
+        userAnswerCorrect = False
+        await message.answer(Texts.miniHelp, reply_markup=ReplyKeyboardRemove())  
+        await state.update_data(showkeyboard='true') # теперь клава буду вызвана при /go
+    
+    return userAnswerCorrect
