@@ -50,11 +50,12 @@ keyboard.add(button1, button2)
 
 
 
-# (Text(equals="* Не помню *")) проверяется полное сооьветствие с текстом
-# ReplyKeyboardRemove() - удаляет клавиатуру из меню
 @dp.message_handler(Text(equals="* Не помню *"))
 async def with_puree(message: types.Message, state: FSMContext):
     """ Отвечает на текс '* Не помню *'"""
+    # (Text(equals="* Не помню *")) проверяется полное сооьветствие с текстом
+    # ReplyKeyboardRemove() - удаляет клавиатуру из меню
+    
     allUserData = await state.get_data() # загружаем статусы пользователя
     questionWord = allUserData['questionWord'] # текущий вопрос
     currentDictStroke = func.dict_words[allUserData['idWord']] # текущая строка словаря 
@@ -71,10 +72,11 @@ async def with_puree(message: types.Message, state: FSMContext):
 
 
 
-# (Text(equals="* Подсказка *")) проверяется полное сооьветствие с текстом
 @dp.message_handler(Text(equals="* Подсказка *"))
 async def with_puree(message: types.Message, state: FSMContext):
     """ Отвечает на текс '* Подсказка *'"""
+    # (Text(equals="* Подсказка *")) проверяется полное сооьветствие с текстом
+
     allUserData = await state.get_data() # загружаем статусы пользователя
     currentDictStroke = func.dict_words[allUserData['idWord']] # текущая строка словаря 
     translatDir = allUserData['translatDir'] # текущее направление перевода
@@ -84,14 +86,13 @@ async def with_puree(message: types.Message, state: FSMContext):
 
 
 
-# ReplyKeyboardRemove() - удаляет клавиатуру из меню
 @dp.message_handler(commands=['start'])
 async def send_start(message: types.Message, state: FSMContext):
     """ Отвечает на команды /start """
     # Второй параметр FSMContext хранит контекст 
+    # ReplyKeyboardRemove() - удаляет клавиатуру из меню
     
     await func.InItStateUser(message, state)
-
     await message.answer("English Training\n" + 
     "Тренируй английские слова!\nДля начала тренировки введи /go, справка /help (с палочкой).",
     reply_markup=ReplyKeyboardRemove())
@@ -121,64 +122,14 @@ async def userStatus(message: types.Message, state: FSMContext):
 async def send_welcome2(message: types.Message, state: FSMContext):
     """ Отвечает на команды /go. Создаёт строку вопроса."""
     await func.goFunc(message, state, keyboard)
-
         
 
 
-# Берёт из модуля func список слов dict_words. 
-# Метод code() делает шрифт моноширным.
-# Формирует строки и конкатинирует их с символом новой строки.
-# Когда количетво как бы строк subStrokeSum в общей строке достигает максимума,
-# выводит в телеграм, затем поновой бежит по списку слов. 
+
 @dp.message_handler(commands=['dict'])
 async def send_test(message: types.Message, state: FSMContext):
     """ Отвечает на команды /dict."""    
-    sum_all_strok = 0  # общее кол-во слов
-    sum_strok = 0      # ограничитель печатаемых ботом строк
-    dict_word_bot = '' # формируемая для отправки боту строка
-    sum_all_words = '' # строка для печати кол-ва всех слов в словаре
-    subStrokeSum = 50  # кол-во подстрок в строке
-    len_col = 15       # ширина колонок
-    
-    for i in func.dict_words:        
-        sum_strok = sum_strok + 1         # сётчик строк
-        sum_all_strok = sum_all_strok + 1 # счётчик всех слов в словаре
-
-        # вычисляем недостающее кол-во пробелов для ширины колонок
-        dobavka_col_0 = len_col - len(i[0])
-
-        len_i = 0 # получаемое колво синонимов
-        len_i = await func.SumSynonym(i) # Подсчёт кол-ва синонимов в строке словаря (мой метод)
-
-        # формируем и добавляем строку со всеми колонками (без транскрипции)
-        # в зависимости от кол-ва синонимов.
-        if len_i == 1:      
-            dict_word_bot = dict_word_bot + (i[0] + (" " * dobavka_col_0) +
-            i[2] + "\n")
-        if len_i == 2:   
-            dict_word_bot = dict_word_bot + (i[0] + (" " * dobavka_col_0) +
-            i[2] + ', ' + i[3] + "\n")
-        if len_i == 3:    
-            dict_word_bot = dict_word_bot + (i[0] + (" " * dobavka_col_0) +
-            i[2] + ', ' + i[3] + ', ' + i[4] + "\n")
-        if len_i == 4:     
-            dict_word_bot = dict_word_bot + (i[0] + (" " * dobavka_col_0) +
-            i[2] + ', ' + i[3] + ', ' + i[4] + ', ' + i[5] + "\n")
-        if len_i == 5:      
-            dict_word_bot = dict_word_bot + (i[0] + (" " * dobavka_col_0) +
-            i[2] + ', ' + i[3] + ', ' + i[4] + ', ' + i[5] + ', ' + i[6] + "\n")        
-        
-        # ограничение кол-ва строк, передаваемых ботом за раз
-        if (sum_strok == subStrokeSum):
-            await message.answer(code(dict_word_bot), parse_mode=types.ParseMode.MARKDOWN_V2)    
-            sum_strok = 0      # обнуляем
-            dict_word_bot = '' # обнуляем 
-            continue           # обрыв цикла и поновой
-
-    # формирование строки с общим кол-вом слов в словаре
-    sum_all_words = sum_all_words + 'Всего слов в словаре: ' + str(sum_all_strok)
-    await message.answer(code(sum_all_words), parse_mode=types.ParseMode.MARKDOWN_V2) 
-    sum_all_strok = 0 # обнуляем счётчик всех слов
+    await func.dictFunc(message)
 
 
 

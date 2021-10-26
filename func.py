@@ -9,8 +9,8 @@ import random    # для раднома
 # для кнопок
 from aiogram.types.reply_keyboard import KeyboardButton, ReplyKeyboardRemove, ReplyKeyboardMarkup
 
-# дополнительно для форматирования
-from aiogram.utils.markdown import italic
+# для форматирования
+from aiogram.utils.markdown import italic, code
 
 
 
@@ -280,4 +280,57 @@ async def goFunc(message: types.Message, state: FSMContext, keyboard: ReplyKeybo
 
 
 
+async def dictFunc(message: types.Message):
+    """ Отвечает на команды /dict."""    
+    # Берёт из модуля func список слов dict_words. 
+    # Метод code() делает шрифт моноширным.
+    # Формирует строки и конкатинирует их с символом новой строки.
+    # Когда количетво как бы строк subStrokeSum в общей строке достигает максимума,
+    # выводит в телеграм, затем поновой бежит по списку слов. 
 
+    sum_all_strok = 0  # общее кол-во слов
+    sum_strok = 0      # ограничитель печатаемых ботом строк
+    dict_word_bot = '' # формируемая для отправки боту строка
+    sum_all_words = '' # строка для печати кол-ва всех слов в словаре
+    subStrokeSum = 50  # кол-во подстрок в строке
+    len_col = 15       # ширина колонок
+    
+    for i in dict_words:        
+        sum_strok = sum_strok + 1         # сётчик строк
+        sum_all_strok = sum_all_strok + 1 # счётчик всех слов в словаре
+
+        # вычисляем недостающее кол-во пробелов для ширины колонок
+        dobavka_col_0 = len_col - len(i[0])
+
+        len_i = 0 # получаемое колво синонимов
+        len_i = await SumSynonym(i) # Подсчёт кол-ва синонимов в строке словаря (мой метод)
+
+        # формируем и добавляем строку со всеми колонками (без транскрипции)
+        # в зависимости от кол-ва синонимов.
+        if len_i == 1:      
+            dict_word_bot = dict_word_bot + (i[0] + (" " * dobavka_col_0) +
+            i[2] + "\n")
+        if len_i == 2:   
+            dict_word_bot = dict_word_bot + (i[0] + (" " * dobavka_col_0) +
+            i[2] + ', ' + i[3] + "\n")
+        if len_i == 3:    
+            dict_word_bot = dict_word_bot + (i[0] + (" " * dobavka_col_0) +
+            i[2] + ', ' + i[3] + ', ' + i[4] + "\n")
+        if len_i == 4:     
+            dict_word_bot = dict_word_bot + (i[0] + (" " * dobavka_col_0) +
+            i[2] + ', ' + i[3] + ', ' + i[4] + ', ' + i[5] + "\n")
+        if len_i == 5:      
+            dict_word_bot = dict_word_bot + (i[0] + (" " * dobavka_col_0) +
+            i[2] + ', ' + i[3] + ', ' + i[4] + ', ' + i[5] + ', ' + i[6] + "\n")        
+        
+        # ограничение кол-ва строк, передаваемых ботом за раз
+        if (sum_strok == subStrokeSum):
+            await message.answer(code(dict_word_bot), parse_mode=types.ParseMode.MARKDOWN_V2)    
+            sum_strok = 0      # обнуляем
+            dict_word_bot = '' # обнуляем 
+            continue           # обрыв цикла и поновой
+
+    # формирование строки с общим кол-вом слов в словаре
+    sum_all_words = sum_all_words + 'Всего слов в словаре: ' + str(sum_all_strok)
+    await message.answer(code(sum_all_words), parse_mode=types.ParseMode.MARKDOWN_V2) 
+    sum_all_strok = 0 # обнуляем счётчик всех слов
