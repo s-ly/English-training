@@ -14,11 +14,13 @@ from aiogram.types.reply_keyboard import KeyboardButton, ReplyKeyboardRemove, Re
 
 # дополнительно для форматирования
 from aiogram.utils.markdown import text, bold, italic, code, underline, strikethrough
+
 import MyToken         # содержит токен
 import func            # мой модуль, содержит функции для бота
 import Texts           # мой модуль, хранит текст
 import log             # мой модуль, лог
 import random          # для раднома
+import sql             # для БД
 
 
 
@@ -155,6 +157,14 @@ async def send_test(message: types.Message, state: FSMContext):
     """ Отвечает на команды /help. """
     await message.answer(Texts.answerHelp, reply_markup=ReplyKeyboardRemove()) # текст из модуля    
     await state.update_data(showkeyboard='true') # теперь клава буду вызвана при /go
+
+
+
+@dp.message_handler(commands=['sql'])
+async def send_test(message: types.Message, state: FSMContext):
+    """ Отвечает на команды /sql. Перезагружает БД."""
+    func.dict_words_converter() 
+    await message.answer('reload SQL') 
 
 
 

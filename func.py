@@ -1,5 +1,6 @@
 # Дочерний модуль, содержит функции для бота
 
+from pprint import pprint
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 
@@ -7,6 +8,7 @@ import csv       # для чтения таблици
 import random    # для раднома
 import log       # мой модуль, лог
 import Texts     # мой модуль, хранит текст
+import sql
 
 # для кнопок
 from aiogram.types.reply_keyboard import KeyboardButton, ReplyKeyboardRemove, ReplyKeyboardMarkup
@@ -15,16 +17,46 @@ from aiogram.types.reply_keyboard import KeyboardButton, ReplyKeyboardRemove, Re
 from aiogram.utils.markdown import italic, code
 
 
-
+# глобальный список списков слов
+dict_words = []
 
 # читаем из таблици данные в наш список списков dict_words
-dict_words = []
-read_file = open('dict.csv', 'r')
-for row in csv.reader(read_file):
-    dict_words.append(row)
-read_file.close()
+# dict_words = []
+# read_file = open('dict_test.csv', 'r')
+# for row in csv.reader(read_file):
+#     dict_words.append(row)
+# read_file.close()
 
 
+def dict_words_converter():
+    """ Создаёт из БД список списков слов.
+    
+    В начале берём глобальный список и обнуляем его. Потом читаем из БД новй список кортежей.
+    Его нужно переделать в список списков. Два временных списка, один для переделки кортежей в список,
+    второй для списка этих списков. Если в БД ячейка пустая None, то пишем туда пустую строку.
+    Временный список списков присваеваем глобальному, а потом временный список обнуляем. """
+
+    global dict_words
+    dict_words = []
+
+    dict_words_sql = sql.read_dict_words_sql()
+
+    new_str = []
+    new_dic = []
+    for i in dict_words_sql:
+        for j in i:
+            if j != None:
+                new_str.append(j)
+            else:
+                new_str.append('')
+        new_dic.append(new_str)
+        new_str = []
+    dict_words = new_dic
+    new_dic = []     
+
+
+# Наполняем список списков словами
+dict_words_converter()
 
 
 async def CorrectAnswer(currentDictStroke, len_i):
