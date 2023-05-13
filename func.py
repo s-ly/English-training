@@ -7,8 +7,7 @@ from aiogram.dispatcher import FSMContext
 import csv       # для чтения таблици
 import random    # для раднома
 import log       # мой модуль, лог
-import Texts     # мой модуль, хранит текст
-import sql
+import sql       # мой, для работы с БД
 
 # для кнопок
 from aiogram.types.reply_keyboard import KeyboardButton, ReplyKeyboardRemove, ReplyKeyboardMarkup
@@ -349,18 +348,18 @@ async def goFunc(message: types.Message, state: FSMContext, keyboard: ReplyKeybo
 
 
 async def dictFunc(message: types.Message):
-    """ Отвечает на команды /dict."""    
-    # Берёт из модуля func список слов dict_words. 
-    # Метод code() делает шрифт моноширным.
-    # Формирует строки и конкатинирует их с символом новой строки.
-    # Когда количетво как бы строк subStrokeSum в общей строке достигает максимума,
-    # выводит в телеграм, затем поновой бежит по списку слов. 
+    """ Отвечает на команды /dict.    
+    Берёт из модуля func список слов dict_words. 
+    Метод code() делает шрифт моноширным.
+    Формирует строки и конкатинирует их с символом новой строки.
+    Когда количетво как бы строк subStrokeSum в общей строке достигает максимума,
+    выводит в телеграм, затем поновой бежит по списку слов. """
 
     sum_all_strok = 0  # общее кол-во слов
     sum_strok = 0      # ограничитель печатаемых ботом строк
     dict_word_bot = '' # формируемая для отправки боту строка
     sum_all_words = '' # строка для печати кол-ва всех слов в словаре
-    subStrokeSum = 50  # кол-во подстрок в строке
+    subStrokeSum = 10  # кол-во подстрок в строке
     len_col = 15       # ширина колонок
     
     for i in dict_words:        
@@ -438,11 +437,11 @@ async def RespondsAnyMessages(message: types.Message, state: FSMContext) -> bool
                 userAnswerCorrect = True
         else:
             userAnswerCorrect = False
-            await message.answer(Texts.miniHelp, reply_markup=ReplyKeyboardRemove())  
+            await message.answer(sql.read_texts_sql('miniHelp'), reply_markup=ReplyKeyboardRemove())  
             await state.update_data(showkeyboard='true') # теперь клава буду вызвана при /go
     else:
         userAnswerCorrect = False
-        await message.answer(Texts.miniHelp, reply_markup=ReplyKeyboardRemove())  
+        await message.answer(sql.read_texts_sql('miniHelp'), reply_markup=ReplyKeyboardRemove())  
         await state.update_data(showkeyboard='true') # теперь клава буду вызвана при /go
     
     return userAnswerCorrect

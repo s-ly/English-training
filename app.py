@@ -17,7 +17,6 @@ from aiogram.utils.markdown import text, bold, italic, code, underline, striketh
 
 import MyToken         # содержит токен
 import func            # мой модуль, содержит функции для бота
-import Texts           # мой модуль, хранит текст
 import log             # мой модуль, лог
 import random          # для раднома
 import sql             # для БД
@@ -32,8 +31,8 @@ import sql             # для БД
 # При разработке использеум test, для работы my.
 # в git его игнорируем, а в место пушим зашифрованный архив.
 
-API_TOKEN = MyToken.myToken # рабочий бот
-# API_TOKEN = MyToken.testToken # тестовый бот
+# API_TOKEN = MyToken.myToken # рабочий бот
+API_TOKEN = MyToken.testToken # тестовый бот
 
 # Initialize bot and dispatcher
 storage = MemoryStorage() # место хранения контекста в ОЗУ
@@ -155,8 +154,18 @@ async def send_test(message: types.Message, state: FSMContext):
 @dp.message_handler(commands=['help'])
 async def send_test(message: types.Message, state: FSMContext):
     """ Отвечает на команды /help. """
-    await message.answer(Texts.answerHelp, reply_markup=ReplyKeyboardRemove()) # текст из модуля    
+    await message.answer(sql.read_texts_sql('answerHelp'), reply_markup=ReplyKeyboardRemove()) # текст из модуля    
     await state.update_data(showkeyboard='true') # теперь клава буду вызвана при /go
+
+
+
+
+@dp.message_handler(commands=['test'])
+async def send_test(message: types.Message, state: FSMContext):
+    """ Отвечает на команды /test. """
+    await message.answer(sql.read_texts_sql('miniHelp'))    
+    await message.answer(sql.read_texts_sql('answerHelp'))    
+
 
 
 
